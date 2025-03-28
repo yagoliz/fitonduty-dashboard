@@ -7,7 +7,7 @@ from layouts.login_layout import login_layout
 from layouts.admin_layout import create_layout as create_admin_layout
 from layouts.participant_layout import create_layout as create_participant_layout
 from layouts.error_layouts import not_found_layout, forbidden_layout
-import callbacks  # This imports and registers all callbacks
+import callbacks  # This imports and registers all callbacks  # noqa: F401
 
 # Routes for Flask server
 @server.route('/login')
