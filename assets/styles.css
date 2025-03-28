@@ -1,0 +1,46 @@
+/* Custom CSS for sidebar */
+#sidebar-container {
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+#main-content {
+    transition: all 0.3s;
+}
+
+@media (max-width: 767.98px) {
+    #sidebar-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 250px !important;
+        height: 100vh;
+        z-index: 1050;
+        overflow-y: auto;
+    }
+    
+    #sidebar-container.d-none {
+        margin-left: -250px;
+    }
+    
+    /* Show all elements when sidebar is toggled on mobile */
+    #sidebar-container .d-none {
+        display: block !important;
+    }
+}
+
+/* Make the toggle button fixed at the top for mobile */
+#sidebar-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1060;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
