@@ -1,7 +1,7 @@
 from dash import html
 import dash_bootstrap_components as dbc
 
-login_layout = dbc.Container(
+layout = dbc.Container(
     [
         html.H1("Healthcare Dashboard - Login", className="text-center my-4"),
         dbc.Row(

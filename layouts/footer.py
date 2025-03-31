@@ -12,7 +12,7 @@ def create_footer():
                 html.Hr(),
                 html.P(
                     [
-                        f"Copyright © {current_year} | The Developers"
+                        f"Copyright © {current_year} | CYD Campus x BASPO"
                     ],
                     className="text-center text-muted"
                 )
