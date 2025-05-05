@@ -182,7 +182,7 @@ def update_heart_rate_gauges(participant_id, date):
                 dcc.Graph(
                     figure=create_gauge_figure(
                         row["resting_hr"], 40, 100, "bpm", "Resting HR",
-                        [[0, 40, "gray"], [40, 60, "green"], [60, 80, "yellow"], [80, 100, "red"]]
+                        [[0, 40, "#40C057"], [40, 60, "#82C91E"], [60, 80, "#FAB005"], [80, 100, "#FD7E14"]]
                     ),
                     config={"displayModeBar": False},
                     style={"height": "200px"}
@@ -336,7 +336,8 @@ def update_hrv_trend_chart(participant_id, date):
         mode='lines+markers',
         name='HRV at Rest',
         line=dict(color="#1976D2", width=3),
-        marker=dict(size=8)
+        marker=dict(size=8),
+        line_shape='spline'
     ))
     
     # Format dates on x-axis
@@ -380,7 +381,6 @@ def create_gauge_figure(value, min_val, max_val, units, title, color_ranges):
     fig.add_trace(go.Indicator(
         mode="gauge+number",
         value=value,
-        title={"text": title},
         number={"suffix": f" {units}"},
         gauge={
             "axis": {"range": [min_val, max_val]},

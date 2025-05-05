@@ -14,8 +14,7 @@ def create_day_selector(id_prefix="participant"):
         A dash component with date picker and navigation buttons
     """
     # Get today and yesterday's date for default values
-    today = datetime.now().date()
-    yesterday = today - timedelta(days=1)
+    default_date = datetime(2025, 3, 25).date()
     
     return html.Div([
         dbc.Row([
@@ -23,23 +22,34 @@ def create_day_selector(id_prefix="participant"):
                 html.H5("Select Date", className="mb-2"),
                 dbc.Row([
                     dbc.Col([
-                        dbc.Button("◀", id=f"{id_prefix}-prev-day", 
-                                   color="secondary", className="w-100")
-                    ], width=2),
+                        # Add d-flex and align-items-center to vertically center the button
+                        html.Div([
+                            dbc.Button("◀", id=f"{id_prefix}-prev-day", 
+                                      color="primary", 
+                                      className="w-100 h-100")
+                        ], className="d-flex align-items-center h-100")
+                    ], width=2, className="px-1"),
                     dbc.Col([
-                        dcc.DatePickerSingle(
-                            id=f"{id_prefix}-date-picker",
-                            date=yesterday,
-                            display_format='YYYY-MM-DD',
-                            clearable=False,
-                            className="w-100"
-                        )
-                    ], width=8),
+                        # Customize date picker styling
+                        html.Div([
+                            dcc.DatePickerSingle(
+                                id=f"{id_prefix}-date-picker",
+                                date=default_date,
+                                display_format='YYYY-MM-DD',
+                                clearable=False,
+                                className="w-100"
+                            )
+                        ], style={'height': '38px'})  # Match button height
+                    ], width=8, className="px-1"),
                     dbc.Col([
-                        dbc.Button("▶", id=f"{id_prefix}-next-day", 
-                                   color="secondary", className="w-100")
-                    ], width=2)
-                ]),
+                        # Add d-flex and align-items-center to vertically center the button
+                        html.Div([
+                            dbc.Button("▶", id=f"{id_prefix}-next-day", 
+                                      color="primary", 
+                                      className="w-100 h-100")
+                        ], className="d-flex align-items-center h-100")
+                    ], width=2, className="px-1")
+                ], className="align-items-center")  # Align items in row vertically
             ], width=12, md=6)
         ], className="mb-4")
     ])

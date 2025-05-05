@@ -1,25 +1,19 @@
-# index.py
 from dash import dcc, html, callback, Input, Output, State
 from dash.exceptions import PreventUpdate
-import dash_bootstrap_components as dbc
-from flask_login import login_user, logout_user, current_user
-from app import app, server, USERS
+import dash
+from flask_login import logout_user, current_user
+from app import app, login_and_create_session
+from utils.database import get_user_by_username
 
 # Import layouts
-from layouts import login_layout
-from layouts.admin_layout import layout as admin_layout
-from layouts import participant_layout
-from layouts.footer import create_footer
+from layouts import login_layout, admin_layout, participant_layout, error_layouts
 
 # Main app layout with URL routing
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content', className="d-flex flex-column min-vh-100"),
-    # Add footer
-    create_footer()
+    html.Div(id='page-content')
 ])
 
-# Callback for URL routing
 @callback(
     Output('page-content', 'children'),
     Input('url', 'pathname')
@@ -28,16 +22,18 @@ def display_page(pathname):
     if pathname == '/login' or not current_user.is_authenticated:
         return login_layout.layout
     
-    # User is authenticated, show appropriate view
-    if current_user.role == 'admin':
-        if pathname == '/':
-            return admin_layout
-    else:
-        if pathname == '/':
-            return participant_layout.create_layout(current_user.id)
-            
-    # Default to login if no match
-    return login_layout.layout
+    # User is authenticated, check role
+    if current_user.is_authenticated:  # This is redundant but clarifies intent
+        if current_user.role == 'admin':
+            if pathname == '/':
+                return admin_layout.create_layout()
+            # Add other admin paths here
+        else:  # Participant view
+            if pathname == '/':
+                return participant_layout.create_layout()
+    
+    # No matching route found
+    return error_layouts.not_found_layout
 
 # Login callback
 @callback(
@@ -49,18 +45,47 @@ def display_page(pathname):
     prevent_initial_call=True
 )
 def login(n_clicks, username, password):
-    if not n_clicks or not username:
+    if not n_clicks or not username or not password:
         raise PreventUpdate
     
-    # Very simple auth - in production, verify against a secure database
-    # and use proper password hashing
-    if username in USERS:
-        user = USERS[username]
-        # In real app, check password hash
-        login_user(user)
-        return '/', f'Logged in as {username}'
-    
-    return '/login', 'Invalid credentials'
+    try:
+        # Retrieve user data from database
+        user_data = get_user_by_username(username)
+        
+        if not user_data:
+            return dash.no_update, html.Div(
+                'User not found', 
+                style={'color': 'red', 'fontWeight': 'bold', 'textAlign': 'center'}
+            )
+        
+        # Create user object
+        from app import User
+        user = User(user_data)
+        
+        # Check password
+        if user.check_password(password):
+            # Log user in and create session
+            success = login_and_create_session(user)
+            
+            if success:
+                return '/', f'Logged in as {user.display_name}'
+            else:
+                return dash.no_update, html.Div(
+                    'Login failed', 
+                    style={'color': 'red', 'fontWeight': 'bold', 'textAlign': 'center'}
+                )
+        else:
+            return dash.no_update, html.Div(
+                'Incorrect password', 
+                style={'color': 'red', 'fontWeight': 'bold', 'textAlign': 'center'}
+            )
+            
+    except Exception as e:
+        print(f"Login error: {e}")
+        return dash.no_update, html.Div(
+            'An error occurred during login', 
+            style={'color': 'red', 'fontWeight': 'bold', 'textAlign': 'center'}
+        )
 
 # Logout callback
 @callback(

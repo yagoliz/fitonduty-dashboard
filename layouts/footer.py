@@ -9,7 +9,6 @@ def create_footer():
     footer = html.Footer(
         dbc.Container(
             [
-                html.Hr(),
                 html.P(
                     [
                         f"Copyright © {current_year} | CYD Campus x BASPO"
