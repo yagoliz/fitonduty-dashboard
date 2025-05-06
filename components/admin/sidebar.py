@@ -1,8 +1,9 @@
 # components/admin/sidebar.py
-from dash import html, dcc, callback, Input, Output, State
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
-from flask_login import current_user
+
+from components.admin.date_selector import create_admin_date_selector
 
 def create_admin_sidebar():
     """
@@ -22,13 +23,9 @@ def create_admin_sidebar():
         html.Hr(),
         
         # Date selection
-        html.H5("Select Date"),
-        dcc.DatePickerSingle(
-            id="admin-date-picker",
-            date=today,
-            display_format="YYYY-MM-DD",
-            className="mb-3 w-100"
-        ),
+        create_admin_date_selector(),
+        
+        html.Hr(),
         
         # Groups and participants selection
         html.H5("Select Data View"),
