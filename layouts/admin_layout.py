@@ -27,7 +27,7 @@ def create_layout():
     # Main content
     main_content = dbc.Col(
         [
-            html.H2("Sensor Data Dashboard", className="text-center mb-4"),
+            html.H2("FitonDuty Dashboard", className="text-center mb-4"),
             
             # Display selected view information
             html.Div(id="selected-view-info", className="mb-4"),

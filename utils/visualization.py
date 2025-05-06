@@ -192,7 +192,7 @@ def create_dual_axis_chart(df, x_col, y1_col, y2_col, y1_name, y2_name, y1_color
     return fig
 
 def create_heart_rate_zones_chart(df):
-    """Create a pie chart showing heart rate zone distribution"""
+    """Create a bar chart showing heart rate zone distribution"""
     # Extract zone columns
     zone_cols = [f'zone{i}_percent' for i in range(1, 8)]
     
@@ -229,34 +229,41 @@ def create_heart_rate_zones_chart(df):
         'Zone 7': 'Maximal (110%+ Max HR)'
     }
     
-    # Create hover text
-    hover_text = [f"{label}: {zone_data[i]:.1f}%<br>{zone_desc[label]}" 
-                 for i, label in enumerate(zone_labels)]
-    
-    # Colors for zones
-    colors = ["#80d8ff", "#4dd0e1", "#26c6da", "#26a69a", "#9ccc65", "#ffee58", "#ffab91"]
+    # Create color gradient from soft red to intense red
+    colors = ["#FFB3B3", "#FF9999", "#FF8080", "#FF6666", "#FF4D4D", "#FF3333", "#FF0000"]
     
     # Create chart
     fig = go.Figure()
     
-    # Add pie chart
-    fig.add_trace(go.Pie(
-        labels=zone_labels,
-        values=zone_data,
-        text=[zone_desc[label] for label in zone_labels],
-        hovertext=hover_text,
-        textinfo='label+percent',
-        marker=dict(colors=colors),
-        hole=0.3
-    ))
+    # Add bar chart
+    for i, (label, value) in enumerate(zip(zone_labels, zone_data)):
+        fig.add_trace(go.Bar(
+            x=[label],
+            y=[value],
+            name=label,
+            marker_color=colors[i],
+            text=[f"{value:.1f}%"],
+            textposition='auto',
+            hovertext=[f"{label}: {value:.1f}%<br>{zone_desc[label]}"],
+            hoverinfo="text"
+        ))
     
     # Update layout
     fig.update_layout(
         title="Heart Rate Zone Distribution",
+        xaxis_title="Heart Rate Zones",
+        yaxis_title="Percentage (%)",
         margin=dict(l=20, r=20, t=40, b=20),
         height=300,
         template="plotly_white",
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        showlegend=False,
+        xaxis=dict(
+            categoryorder='array',
+            categoryarray=zone_labels
+        ),
+        yaxis=dict(
+            range=[0, max(100, max(zone_data) * 1.1)]
+        )
     )
     
     return fig
