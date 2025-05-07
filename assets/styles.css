@@ -436,6 +436,7 @@ footer {
 
 :root {
     --sidebar-width: 450px; /* Set your desired width here */
+    --toggle-width: 45px;
   }
 
 /* Main layout container */
@@ -479,8 +480,8 @@ footer {
 /* Toggle button container - separate from sidebar */
 .sidebar-toggle-container {
     position: fixed;
-    left: var(--sidebar-width);
-    top: 50%;
+    left: calc(var(--sidebar-width) - var(--toggle-width) - 20px);
+    top: 2.5%;
     transform: translateY(-50%);
     z-index: 1040; /* Above sidebar */
     transition: left 0.3s ease;
@@ -493,15 +494,15 @@ footer {
 
 /* Toggle button styling */
 .sidebar-toggle-btn {
-    width: 28px;
-    height: 56px;
+    width: 38px;
+    height: 38px;
     padding: 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-left: none;
+    /* border: 1px solid #dee2e6; */
+    border: none;
     border-radius: 0 4px 4px 0;
     font-size: 16px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
@@ -556,7 +557,7 @@ footer {
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .sidebar-column {
-        transform: translateX(-300px);
+        transform: translateX(calc(-1 * var(--sidebar-width)));
     }
     
     .sidebar-toggle-container {
@@ -568,7 +569,7 @@ footer {
     }
     
     .sidebar-mobile-open ~ .sidebar-toggle-container {
-        left: 300px;
+        left: var(--sidebar-width);
     }
     
     .main-content-column {
