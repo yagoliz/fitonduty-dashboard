@@ -25,8 +25,8 @@ def create_layout():
     # Get group information
     group = current_user.group if current_user.is_authenticated else None
     
-    return dbc.Container([
-        # Navigation bar
+    return html.Div([
+        # Navigation bar - outside the container for full width
         dbc.Navbar(
             dbc.Container([
                 html.A(
@@ -43,7 +43,7 @@ def create_layout():
                 dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
                 dbc.Collapse(
                     dbc.Nav([
-                        dbc.NavItem(dbc.Button("Logout", id="logout-button", color="danger", outline=True)),
+                        dbc.NavItem(dbc.Button("Logout", id="logout-button", className="btn-logout")),
                     ],
                     className="ms-auto",
                     navbar=True),
@@ -51,36 +51,42 @@ def create_layout():
                     navbar=True,
                 ),
             ]),
+            color="primary",
+            dark=True,
+            className="mb-4"
         ),
         
-        # Header section with user info
-        dbc.Row([
-            dbc.Col([
-                html.H1("Your FitonDuty Dashboard", className="display-4"),
-                html.P(f"Welcome {display_name}!", className="lead"),
-                html.Hr(className="my-4"),
-                html.P(f"Group: {group}" if group else "", className="lead"),
-            ])
-        ], className="mb-4"),
-        
-        # Date selector component
-        dbc.Row([
-            dbc.Col([
-                html.H5("Dates of Interest", className="mb-2"),
-                create_date_selector()
-            ], width=4),
-            dbc.Col([
-                html.H5("Your Health Summary"),
-                html.Div(id="participant-details-container", className="mb-2"),
-            ], width=8)
-        ], className="mb-4"),
-        
-        # Health metrics component
-        create_health_metrics(),
-        
-        # Detailed charts component
-        create_detailed_charts(),
-        
-        # Footer
-        create_footer()
-    ], fluid=True)
+        # Main content container
+        dbc.Container([
+            # Header section with user info
+            dbc.Row([
+                dbc.Col([
+                    html.H1("Your FitonDuty Dashboard", className="display-5 mb-3"),
+                    html.P(f"Welcome {display_name}!", className="lead mb-2"),
+                    html.P(f"Group: {group}" if group else "", className="text-muted mb-3"),
+                    html.Hr(className="my-3"),
+                ])
+            ], className="mb-4"),
+            
+            # Date selector component and health summary
+            dbc.Row([
+                dbc.Col([
+                    html.H5("Dates of Interest", className="section-title"),
+                    create_date_selector()
+                ], xs=12, md=5, lg=4, className="mb-4"),
+                dbc.Col([
+                    html.H5("Your Health Summary", className="section-title"),
+                    html.Div(id="participant-details-container", className="mb-3"),
+                ], xs=12, md=7, lg=8, className="mb-4")
+            ], className="mb-3"),
+            
+            # Health metrics section
+            create_health_metrics(),
+            
+            # Detailed charts component
+            create_detailed_charts(),
+            
+            # Footer
+            create_footer()
+        ], className="px-3 px-md-4")
+    ])

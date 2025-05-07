@@ -55,77 +55,79 @@ def update_participant_details(start_date, end_date):
         # Instead of using the full participant_detail component,
         # we'll create a more compact summary for this section
         return dbc.Card(
-            [
-                dbc.CardBody(
-                    [
-                        # Print the date on the top
-                        html.H5(
-                            f"Participant Details for: {end_date}",
-                            className="card-title",
-                        ),
-                        # Summary cards in a single row
-                        dbc.Row(
-                            [
-                                # Heart rate card
-                                dbc.Col(
-                                    [
-                                        html.H4(
-                                            f"{df_single_day['resting_hr'].iloc[0]:.0f}",
-                                            className="text-center text-primary",
-                                        ),
-                                        html.P(
-                                            "Resting HR (bpm)",
-                                            className="text-center small",
-                                        ),
-                                    ],
-                                    width=3,
-                                ),
-                                # Max HR card
-                                dbc.Col(
-                                    [
-                                        html.H4(
-                                            f"{df_single_day['max_hr'].iloc[0]:.0f}",
-                                            className="text-center text-danger",
-                                        ),
-                                        html.P(
-                                            "Max HR (bpm)",
-                                            className="text-center small",
-                                        ),
-                                    ],
-                                    width=3,
-                                ),
-                                # Sleep card
-                                dbc.Col(
-                                    [
-                                        html.H4(
-                                            f"{df_single_day['sleep_hours'].iloc[0]:.1f}",
-                                            className="text-center text-success",
-                                        ),
-                                        html.P(
-                                            "Sleep Hours", className="text-center small"
-                                        ),
-                                    ],
-                                    width=3,
-                                ),
-                                # HRV card
-                                dbc.Col(
-                                    [
-                                        html.H4(
-                                            f"{df_single_day['hrv_rest'].iloc[0]:.0f}",
-                                            className="text-center text-info",
-                                        ),
-                                        html.P(
-                                            "HRV (ms)", className="text-center small"
-                                        ),
-                                    ],
-                                    width=3,
-                                ),
-                            ]
-                        ),
-                    ]
-                )
-            ]
-        )
+        [
+            dbc.CardBody(
+                [
+                    html.H5(
+                        f"Health Snapshot for {end_date}",
+                        className="mb-3",
+                    ),
+                    dbc.Row(
+                        [
+                            # Heart rate card
+                            dbc.Col(
+                                [
+                                    html.H4(
+                                        f"{df_single_day['resting_hr'].iloc[0]:.0f}",
+                                        className="text-primary text-center metric-value",
+                                    ),
+                                    html.P(
+                                        "Resting HR (bpm)",
+                                        className="text-center small",
+                                    ),
+                                ],
+                                width=3,
+                            ),
+                            # Max HR card
+                            dbc.Col(
+                                [
+                                    html.H4(
+                                        f"{df_single_day['max_hr'].iloc[0]:.0f}",
+                                        className="text-danger text-center metric-value",
+                                    ),
+                                    html.P(
+                                        "Max HR (bpm)",
+                                        className="text-center small",
+                                    ),
+                                ],
+                                width=3,
+                            ),
+                            # Sleep card
+                            dbc.Col(
+                                [
+                                    html.H4(
+                                        f"{df_single_day['sleep_hours'].iloc[0]:.1f}",
+                                        className="text-success text-center metric-value",
+                                    ),
+                                    html.P(
+                                        "Sleep Hours", 
+                                        className="text-center small"
+                                    ),
+                                ],
+                                width=3,
+                            ),
+                            # HRV card
+                            dbc.Col(
+                                [
+                                    html.H4(
+                                        f"{df_single_day['hrv_rest'].iloc[0]:.0f}",
+                                        className="text-info text-center metric-value",
+                                    ),
+                                    html.P(
+                                        "HRV (ms)", 
+                                        className="text-center small"
+                                    ),
+                                ],
+                                width=3,
+                            ),
+                        ],
+                        className="g-0"
+                    ),
+                ]
+            )
+        ],
+        className="border-0 bg-light"
+    )
 
     except Exception as e:
         # Return error message in case of exception
@@ -234,13 +236,13 @@ def update_heart_rate_info(start_date, end_date):
 
         # Update layout
         fig.update_layout(
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=200,
+            margin=dict(l=10, r=10, t=10, b=35),
+            autosize=True,  # Important for responsive sizing
+            height=None,    # Let the container determine height
             template="plotly_white",
-            showlegend=True,
-            legend=dict(
-                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
-            ),
+            showlegend=False,
+            plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
+            paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
         )
 
         # Update axes
@@ -466,10 +468,13 @@ def update_hrv_info(start_date, end_date):
 
         # Update layout
         fig.update_layout(
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=200,
+            margin=dict(l=10, r=10, t=10, b=35),
+            autosize=True,  # Important for responsive sizing
+            height=None,    # Let the container determine height
             template="plotly_white",
             showlegend=False,
+            plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
+            paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
         )
 
         # Update axes
@@ -607,7 +612,8 @@ def update_activity_chart(start_date, end_date):
             fig.update_layout(
                 title="Activity Metrics",
                 margin=dict(l=20, r=20, t=50, b=20),
-                height=300,
+                autosize=True,
+                height=None,
                 template="plotly_white",
                 annotations=[
                     dict(

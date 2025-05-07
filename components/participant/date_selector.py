@@ -5,47 +5,48 @@ from dash.exceptions import PreventUpdate
 
 def create_date_selector():
     """
-    Create the date selector component for participant dashboard
+    Create a more compact date selector component for participant dashboard
     
     Returns:
         A dash component with date selector
     """
     # Create last 7 days date range for default view
-    today = datetime.now().date()
+    today = datetime(2025, 5, 1).date()
     week_ago = today - timedelta(days=6)
     
-    return dbc.Card([
-                dbc.CardBody([
-                    html.H5("Select Date Range", className="card-title"),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("From:"),
-                            dcc.DatePickerSingle(
-                                id="participant-start-date",
-                                date=week_ago,
-                                display_format="YYYY-MM-DD",
-                                className="mb-2"
-                            ),
-                        ], width=6),
-                        dbc.Col([
-                            dbc.Label("To:"),
-                            dcc.DatePickerSingle(
-                                id="participant-end-date",
-                                date=today,
-                                display_format="YYYY-MM-DD",
-                                className="mb-2"
-                            ),
-                        ], width=6),
-                    ]),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Button("Last 7 Days", id="btn-last-7-days", color="secondary", size="sm", className="me-1"),
-                            dbc.Button("Last 30 Days", id="btn-last-30-days", color="secondary", size="sm", className="me-1"),
-                            dbc.Button("This Month", id="btn-this-month", color="secondary", size="sm"),
-                        ])
-                    ], className="mt-2"),
-                ])
-            ])
+    return html.Div([
+        html.H6("Select Date Range", className="mb-2"),
+        
+        # More compact From/To layout
+        html.Div([
+            dbc.Col([
+                html.Label("From:", className="date-range-label"),
+                dcc.DatePickerSingle(
+                    id="participant-start-date",
+                    date=week_ago,
+                    display_format="YYYY-MM-DD",
+                    className="date-input dash-bootstrap",
+                ),
+            ], className="date-range-row"),
+            
+            dbc.Col([
+                html.Label("To:", className="date-range-label"),
+                dcc.DatePickerSingle(
+                    id="participant-end-date",
+                    date=today,
+                    display_format="YYYY-MM-DD",
+                    className="date-input"
+                ),
+            ], className="date-range-row"),
+        ]),
+        
+        # Quick select buttons
+        html.Div([
+            dbc.Button("Last 7", id="btn-last-7-days", color="light", size="sm", className="date-button me-1"),
+            dbc.Button("Last 30", id="btn-last-30-days", color="light", size="sm", className="date-button me-1"),
+            dbc.Button("This Month", id="btn-this-month", color="light", size="sm", className="date-button"),
+        ], className="date-button-group")
+    ], className="date-selector-container border-0")
 
 @callback(
     [Output("participant-start-date", "date"),

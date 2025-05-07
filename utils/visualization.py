@@ -253,8 +253,9 @@ def create_heart_rate_zones_chart(df):
         title="Heart Rate Zone Distribution",
         xaxis_title="Heart Rate Zones",
         yaxis_title="Percentage (%)",
+        autosize=True,
         margin=dict(l=20, r=20, t=40, b=20),
-        height=300,
+        height=None,
         template="plotly_white",
         showlegend=False,
         xaxis=dict(
