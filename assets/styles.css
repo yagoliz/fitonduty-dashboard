@@ -432,114 +432,147 @@ footer {
     margin-top: 0.75rem;
 }
 
-/* Reduce overall size of container */
-.date-selector-row {
-    margin-bottom: 0.5rem;
-}
+/* Sidebarrrrrrr */
 
-/* SIDEBAR */
-.sidebar-column {
-    transition: all 0.3s ease;
-    width: 280px;
-    flex: 0 0 280px;
-    max-width: 280px;
-    overflow: hidden;
-}
+:root {
+    --sidebar-width: 450px; /* Set your desired width here */
+  }
 
-.sidebar-collapsed {
-    width: 0 !important;
-    flex: 0 0 0 !important;
-    max-width: 0 !important;
-    padding: 0 !important;
-    overflow: hidden;
-    margin: 0 !important;
-    border: none !important;
-}
-
-.main-content-column {
-    transition: all 0.3s ease;
-}
-
-.main-content-expanded {
+/* Main layout container */
+.dashboard-container {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
     width: 100%;
-    max-width: 100%;
-    flex: 0 0 100%;
-    padding-left: 15px !important;
+    overflow-x: hidden;
 }
 
+/* Full-height sidebar that extends from top to bottom */
+.sidebar-column {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    z-index: 1030;
+    background-color: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    transform: translateX(0);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    padding-top: 15px;
+}
+
+/* Sidebar header area */
+.sidebar-header {
+    padding: 20px 15px;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 20px;
+}
+
+/* Collapsed sidebar state */
+.sidebar-collapsed {
+    transform: translateX(calc(-1 * var(--sidebar-width))); /* Match the wider sidebar width */
+}
+
+/* Toggle button container - separate from sidebar */
 .sidebar-toggle-container {
-    position: absolute;
-    right: 0;
+    position: fixed;
+    left: var(--sidebar-width);
     top: 50%;
     transform: translateY(-50%);
-    z-index: 1030;
-    transition: all 0.3s ease;
+    z-index: 1040; /* Above sidebar */
+    transition: left 0.3s ease;
 }
 
+/* When sidebar is collapsed, move toggle container to left edge */
+.sidebar-collapsed ~ .sidebar-toggle-container {
+    left: 0;
+}
+
+/* Toggle button styling */
 .sidebar-toggle-btn {
     width: 28px;
-    height: 40px;
+    height: 56px;
     padding: 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px 0 0 4px;
-    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-    border: 1px solid rgba(0,0,0,0.1);
-    border-right: none;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.sidebar-collapsed .sidebar-toggle-container {
-    position: fixed;
-    left: 0;
-    right: auto;
-    top: 50%;
-}
-
-.sidebar-collapsed .sidebar-toggle-btn {
-    border-radius: 0 4px 4px 0;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    border-right: 1px solid rgba(0,0,0,0.1);
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
     border-left: none;
+    border-radius: 0 4px 4px 0;
+    font-size: 16px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    cursor: pointer;
 }
 
-/* Prevent content flash during transitions */
-.main-content-inner {
-    transition: opacity 0.15s ease; /* Shorter to prevent visible opacity change */
-    opacity: 1 !important;
+/* Hover effect for toggle button */
+.sidebar-toggle-btn:hover {
+    background-color: #e9ecef;
+    color: #0077b6;
 }
 
-/* Add to assets/styles.css */
-.row-with-sidebar {
-    position: relative;
-    overflow-x: hidden;
+/* Main content area */
+.main-content-column {
+    flex: 1;
+    transition: margin-left 0.3s ease;
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
 }
 
-/* Responsive styles */
+/* Main content when sidebar is collapsed */
+.sidebar-collapsed ~ .main-content-column {
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Content container - now with top padding since there's no navbar */
+.main-content-container {
+    padding: 30px; /* Increased top padding */
+    flex: 1;
+}
+
+/* Dashboard title in main content */
+.dashboard-title {
+    color: #2A65A3; /* Match blue theme */
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+/* Footer styling */
+footer {
+    margin-top: auto;
+    padding: 15px 0;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+/* Mobile adjustments */
 @media (max-width: 768px) {
     .sidebar-column {
-        position: fixed;
-        left: 0;
-        top: 56px;
-        /* Navbar height */
-        z-index: 1030;
-        height: calc(100vh - 56px);
-        width: 280px;
-        max-width: 280px;
-        transform: translateX(-100%);
+        transform: translateX(-300px);
     }
-
+    
+    .sidebar-toggle-container {
+        left: 0;
+    }
+    
     .sidebar-column.sidebar-mobile-open {
         transform: translateX(0);
     }
-
+    
+    .sidebar-mobile-open ~ .sidebar-toggle-container {
+        left: 300px;
+    }
+    
     .main-content-column {
+        margin-left: 0;
         width: 100%;
-        max-width: 100%;
-        flex: 0 0 100%;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
     }
 }

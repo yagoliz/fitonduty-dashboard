@@ -41,13 +41,13 @@ def toggle_sidebar(n_clicks, sidebar_state):
     # Set appropriate classes based on state
     if is_open:
         # Sidebar is open
-        sidebar_class = "sidebar-column bg-white shadow-sm"
-        content_class = "main-content-column pb-3 ps-md-4"
+        sidebar_class = "sidebar-column px-0"
+        content_class = "main-content-column"
         toggle_text = "❮"  # Left arrow when sidebar is open (to close it)
     else:
         # Sidebar is closed
-        sidebar_class = "sidebar-column bg-white shadow-sm sidebar-collapsed"
-        content_class = "main-content-column pb-3 main-content-expanded"
+        sidebar_class = "sidebar-column px-0 sidebar-collapsed"
+        content_class = "main-content-column"
         toggle_text = "❯"  # Right arrow when sidebar is closed (to open it)
     
     # Update state

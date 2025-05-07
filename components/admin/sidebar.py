@@ -115,7 +115,7 @@ def create_admin_sidebar():
         # Logout button (mobile hidden, shown in navbar)
         dbc.Button(
             "Logout", 
-            id="logout-button-sidebar", 
+            id="logout-button", 
             color="danger", 
             className="w-100 mt-3 d-md-block d-none"
         )
