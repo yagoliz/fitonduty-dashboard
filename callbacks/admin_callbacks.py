@@ -17,6 +17,45 @@ from components.admin.group_comparison import create_group_comparison
 from components.admin.group_summary import create_group_summary
 from components.admin.participant_detail import create_participant_detail
 
+
+@callback(
+    [Output("sidebar-column", "className"),
+     Output("main-content-column", "className"),
+     Output("sidebar-state", "data"),
+     Output("sidebar-toggle", "children")],
+    [Input("sidebar-toggle", "n_clicks")],
+    [State("sidebar-state", "data")],
+    prevent_initial_call=True
+)
+def toggle_sidebar(n_clicks, sidebar_state):
+    """Toggle the sidebar visibility and update the toggle icon"""
+    if not n_clicks:
+        raise PreventUpdate
+        
+    # Get current state
+    is_open = sidebar_state.get("is_open", True)
+    
+    # Toggle state
+    is_open = not is_open
+    
+    # Set appropriate classes based on state
+    if is_open:
+        # Sidebar is open
+        sidebar_class = "sidebar-column bg-white shadow-sm"
+        content_class = "main-content-column pb-3 ps-md-4"
+        toggle_text = "❮"  # Left arrow when sidebar is open (to close it)
+    else:
+        # Sidebar is closed
+        sidebar_class = "sidebar-column bg-white shadow-sm sidebar-collapsed"
+        content_class = "main-content-column pb-3 main-content-expanded"
+        toggle_text = "❯"  # Right arrow when sidebar is closed (to open it)
+    
+    # Update state
+    new_state = {"is_open": is_open}
+    
+    return sidebar_class, content_class, new_state, toggle_text
+
+
 # Callback to update admin user info
 @callback(Output("admin-user-info", "children"), Input("url", "pathname"))
 def update_admin_user_info(pathname):
@@ -137,7 +176,7 @@ def update_participant_store(participant_id, show_all, group_id):
         Input("selected-participant-store", "data"),
         Input("show-all-checkbox", "value"),
         Input("admin-date-range", "data"),
-    ],
+    ]
 )
 def update_selected_view_info(group_id, participant_id, show_all, date_range):
     """Update the information about what data is being displayed"""
@@ -145,47 +184,32 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
     # Handle date range display text
     date_info = ""
     if date_range:
-        if date_range["mode"] == "single":
-            single_date = date_range.get("end_date")
-            if single_date:
-                date_str = (
-                    datetime.strptime(single_date, "%Y-%m-%d").strftime("%B %d, %Y")
-                    if isinstance(single_date, str)
-                    else single_date.strftime("%B %d, %Y")
-                )
-                date_info = f"on {date_str}"
-        else:
-            if date_range["mode"] == "7days":
-                date_info = "for the Last 7 Days"
-            elif date_range["mode"] == "30days":
-                date_info = "for the Last 30 Days"
-            elif date_range["mode"] == "all":
-                date_info = "for All Time"
-            elif date_range["mode"] == "custom":
-                start_date = date_range.get("start_date")
-                end_date = date_range.get("end_date")
-                if start_date and end_date:
-                    start_str = (
-                        datetime.strptime(start_date, "%Y-%m-%d").strftime("%b %d, %Y")
-                        if isinstance(start_date, str)
-                        else start_date.strftime("%b %d, %Y")
-                    )
-                    end_str = (
-                        datetime.strptime(end_date, "%Y-%m-%d").strftime("%b %d, %Y")
-                        if isinstance(end_date, str)
-                        else end_date.strftime("%b %d, %Y")
-                    )
-                    date_info = f"from {start_str} to {end_str}"
+        start_date = date_range.get("start_date")
+        end_date = date_range.get("end_date")
+        
+        if start_date and end_date:
+            start_str = (
+                datetime.strptime(start_date, "%Y-%m-%d").strftime("%b %d, %Y")
+                if isinstance(start_date, str)
+                else start_date.strftime("%b %d, %Y")
+            )
+            end_str = (
+                datetime.strptime(end_date, "%Y-%m-%d").strftime("%b %d, %Y")
+                if isinstance(end_date, str)
+                else end_date.strftime("%b %d, %Y")
+            )
+            
+            # Check if it's a single day
+            if start_date == end_date:
+                date_info = f"on {end_str}"
+            else:
+                date_info = f"from {start_str} to {end_str}"
 
     if 1 in show_all:
-        return html.Div(
-            [
-                html.H4(f"Viewing: All Participants {date_info}"),
-                html.P(
-                    "Displaying aggregated data across all groups and participants."
-                ),
-            ]
-        )
+        return html.Div([
+            html.H4(f"Viewing: All Participants {date_info}"),
+            html.P("Displaying aggregated data across all groups and participants."),
+        ])
 
     if not group_id:
         return html.Div("Please select a group")
@@ -198,14 +222,10 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
         )
 
         if not participant_id:
-            return html.Div(
-                [
-                    html.H4(f"Viewing: {group_name} {date_info}"),
-                    html.P(
-                        "Please select a participant or choose 'Show all participants'."
-                    ),
-                ]
-            )
+            return html.Div([
+                html.H4(f"Viewing: {group_name} {date_info}"),
+                html.P("Please select a participant or choose 'Show all participants'."),
+            ])
 
         # Get participant name
         participant_groups = get_participants_by_group(group_id)
@@ -219,20 +239,16 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
             # Try to get participant name from user_by_id
             user_data = get_user_by_id(participant_id)
             if user_data:
-                participant_name = user_data.get(
-                    "username", f"Participant {participant_id}"
-                )
+                participant_name = user_data.get("username", f"Participant {participant_id}")
             else:
                 participant_name = f"Participant {participant_id}"
 
-        return html.Div(
-            [
-                html.H4(f"Viewing: {participant_name} {date_info}"),
-                html.P(f"Individual data for participant in {group_name}."),
-            ]
-        )
+        return html.Div([
+            html.H4(f"Viewing: {participant_name} {date_info}"),
+            html.P(f"Individual data for participant in {group_name}."),
+        ])
     except Exception as e:
-        print(f"Error updating view info: {e}")
+        print(f"Error updating view info: {str(e)}")
         return html.Div(f"Error: {str(e)}")
 
 
@@ -244,63 +260,22 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
         Input("show-all-checkbox", "value"),
         Input("selected-participant-store", "data"),
         Input("admin-date-range", "data"),
-    ],
+    ]
 )
 def update_data_visualizations(group_id, show_all, participant_id, date_range):
     """Update the data visualizations based on selection"""
     if not date_range:
-        return html.Div(
-            [dbc.Alert("Please select a date or date range.", color="info")]
-        )
+        return html.Div([dbc.Alert("Please select a date range.", color="info")])
 
     # Extract date information
-    mode = date_range.get("mode", "single")
-
-    # Determine start and end dates based on mode
-    today = datetime.now().date()
-    if mode == "single":
-        end_date = date_range.get("end_date")
-        if not end_date:
-            end_date = today
-        start_date = end_date  # For single day, start = end
-    else:
-        end_date = date_range.get("end_date", today.isoformat())
-        if mode == "7days":
-            start_date = (
-                (
-                    datetime.strptime(end_date, "%Y-%m-%d").date() - timedelta(days=6)
-                ).isoformat()
-                if isinstance(end_date, str)
-                else (end_date - timedelta(days=6)).isoformat()
-            )
-        elif mode == "30days":
-            start_date = (
-                (
-                    datetime.strptime(end_date, "%Y-%m-%d").date() - timedelta(days=29)
-                ).isoformat()
-                if isinstance(end_date, str)
-                else (end_date - timedelta(days=29)).isoformat()
-            )
-        elif mode == "all":
-            # Use a year ago as default for "all time"
-            start_date = (
-                (
-                    datetime.strptime(end_date, "%Y-%m-%d").date() - timedelta(days=365)
-                ).isoformat()
-                if isinstance(end_date, str)
-                else (end_date - timedelta(days=365)).isoformat()
-            )
-        else:  # For custom range
-            start_date = date_range.get("start_date")
-            if not start_date:
-                start_date = (
-                    (
-                        datetime.strptime(end_date, "%Y-%m-%d").date()
-                        - timedelta(days=30)
-                    ).isoformat()
-                    if isinstance(end_date, str)
-                    else (end_date - timedelta(days=30)).isoformat()
-                )
+    start_date = date_range.get("start_date")
+    end_date = date_range.get("end_date")
+    
+    if not start_date or not end_date:
+        # Default to last 7 days if dates are missing
+        today = datetime.now().date()
+        end_date = today.isoformat()
+        start_date = (today - timedelta(days=6)).isoformat()
 
     # Convert string dates to datetime objects if needed
     if isinstance(start_date, str):
@@ -311,28 +286,22 @@ def update_data_visualizations(group_id, show_all, participant_id, date_range):
     # If showing all participants
     if 1 in show_all:
         # Return group comparison visualizations
-        return create_group_comparison_data(start_date, end_date, mode)
+        return create_group_comparison_data(start_date, end_date, "range")
 
     # If only group is selected
     if group_id and not participant_id:
         # Return group summary visualizations
-        return create_group_summary_data(group_id, start_date, end_date, mode)
+        return create_group_summary_data(group_id, start_date, end_date, "range")
 
     # If participant is selected
     if participant_id:
         # Return participant detail visualizations
-        return create_participant_detail_data(
-            participant_id, start_date, end_date, mode
-        )
+        return create_participant_detail_data(participant_id, start_date, end_date, "range")
 
     # Default - no selection
-    return html.Div(
-        [
-            dbc.Alert(
-                "Please select a group and/or participant to view data.", color="info"
-            )
-        ]
-    )
+    return html.Div([
+        dbc.Alert("Please select a group and/or participant to view data.", color="info")
+    ])
 
 
 def create_group_comparison_data(start_date, end_date, mode):

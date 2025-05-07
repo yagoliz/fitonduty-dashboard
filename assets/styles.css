@@ -18,6 +18,7 @@
     margin-left: -50vw;
     margin-right: -50vw;
     margin-bottom: 2rem;
+    border-bottom: none !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -364,15 +365,18 @@ footer {
 
 /* Make date picker inputs even smaller */
 .DateInput {
-    width: 120px !important; /* Increased width to fit full date */
+    width: 120px !important;
+    /* Increased width to fit full date */
 }
 
 .DateInput_input {
     font-size: 0.85rem;
     padding: 6px 8px !important;
     border-radius: 4px;
-    text-align: center; /* Center the date text for better appearance */
+    text-align: center;
+    /* Center the date text for better appearance */
 }
+
 /* Better spacing between sections */
 .section-title {
     margin-top: 1.5rem;
@@ -431,4 +435,111 @@ footer {
 /* Reduce overall size of container */
 .date-selector-row {
     margin-bottom: 0.5rem;
+}
+
+/* SIDEBAR */
+.sidebar-column {
+    transition: all 0.3s ease;
+    width: 280px;
+    flex: 0 0 280px;
+    max-width: 280px;
+    overflow: hidden;
+}
+
+.sidebar-collapsed {
+    width: 0 !important;
+    flex: 0 0 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    margin: 0 !important;
+    border: none !important;
+}
+
+.main-content-column {
+    transition: all 0.3s ease;
+}
+
+.main-content-expanded {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 100%;
+    padding-left: 15px !important;
+}
+
+.sidebar-toggle-container {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1030;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle-btn {
+    width: 28px;
+    height: 40px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px 0 0 4px;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-right: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-collapsed .sidebar-toggle-container {
+    position: fixed;
+    left: 0;
+    right: auto;
+    top: 50%;
+}
+
+.sidebar-collapsed .sidebar-toggle-btn {
+    border-radius: 0 4px 4px 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    border-right: 1px solid rgba(0,0,0,0.1);
+    border-left: none;
+}
+
+/* Prevent content flash during transitions */
+.main-content-inner {
+    transition: opacity 0.15s ease; /* Shorter to prevent visible opacity change */
+    opacity: 1 !important;
+}
+
+/* Add to assets/styles.css */
+.row-with-sidebar {
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .sidebar-column {
+        position: fixed;
+        left: 0;
+        top: 56px;
+        /* Navbar height */
+        z-index: 1030;
+        height: calc(100vh - 56px);
+        width: 280px;
+        max-width: 280px;
+        transform: translateX(-100%);
+    }
+
+    .sidebar-column.sidebar-mobile-open {
+        transform: translateX(0);
+    }
+
+    .main-content-column {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
 }

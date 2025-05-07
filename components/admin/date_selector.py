@@ -1,196 +1,124 @@
+# components/admin/date_selector.py - Updated version
 from datetime import datetime, timedelta
 
-from dash import html, dcc, callback, Input, Output, State, callback_context, no_update
+from dash import html, dcc, callback, Input, Output, State, callback_context
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 
 def create_admin_date_selector():
     """
-    Create an enhanced date selector component for the admin dashboard
-    that supports both single date selection and date range options
+    Create a more compact date selector component for admin dashboard
+    that matches the participant dashboard selector
     
     Returns:
         A dash component with date selection controls
     """
-    # Create default date values
+    # Create last 7 days date range for default view
     today = datetime(2025, 5, 1).date()
     week_ago = today - timedelta(days=6)
     
     return html.Div([
-        dbc.Row([
+        html.H6("Select Date Range", className="mb-2"),
+        
+        # More compact From/To layout
+        html.Div([
             dbc.Col([
-                html.H5("Date Selection", className="mb-2"),
-                
-                # Date range buttons
-                dbc.ButtonGroup([
-                    dbc.Button("Single Date", id="admin-single-date-btn", color="primary", 
-                              className="me-1 date-range-btn", n_clicks=1),
-                    dbc.Button("Last 7 Days", id="admin-last-7-btn", color="secondary", 
-                              className="me-1 date-range-btn"),
-                    dbc.Button("Last 30 Days", id="admin-last-30-btn", color="secondary", 
-                              className="me-1 date-range-btn"),
-                    dbc.Button("All Time", id="admin-all-time-btn", color="secondary", 
-                              className="date-range-btn")
-                ], className="mb-3 d-flex flex-wrap"),
-                
-                # Date selection content - will switch between single date and date range
-                html.Div([
-                    # Single date picker (default view)
-                    html.Div([
-                        dbc.Label("Select Date:"),
-                        dcc.DatePickerSingle(
-                            id="admin-date-picker",
-                            date=today,
-                            display_format="YYYY-MM-DD",
-                            className="w-100"
-                        )
-                    ], id="admin-single-date-container"),
-                    
-                    # Date range pickers (hidden by default)
-                    html.Div([
-                        dbc.Row([
-                            dbc.Col([
-                                dbc.Label("From:"),
-                                dcc.DatePickerSingle(
-                                    id="admin-start-date",
-                                    date=week_ago,
-                                    display_format="YYYY-MM-DD",
-                                    className="w-100"
-                                )
-                            ], width=6),
-                            dbc.Col([
-                                dbc.Label("To:"),
-                                dcc.DatePickerSingle(
-                                    id="admin-end-date",
-                                    date=today,
-                                    display_format="YYYY-MM-DD",
-                                    className="w-100"
-                                )
-                            ], width=6)
-                        ])
-                    ], id="admin-date-range-container", style={"display": "none"})
-                ]),
-                
-                # Store for current date mode
-                dcc.Store(id="admin-date-mode", data="single"),
-                
-                # Store for date range values to use in callbacks
-                dcc.Store(id="admin-date-range", data={
-                    "start_date": week_ago.isoformat(),
-                    "end_date": today.isoformat(),
-                    "mode": "single"
-                })
-            ], width=12)
-        ], className="mb-3")
-    ])
+                html.Label("From:", className="date-range-label"),
+                dcc.DatePickerSingle(
+                    id="admin-start-date",
+                    date=week_ago,
+                    display_format="YYYY-MM-DD",
+                    className="date-input dash-bootstrap",
+                ),
+            ], className="date-range-row"),
+            
+            dbc.Col([
+                html.Label("To:", className="date-range-label"),
+                dcc.DatePickerSingle(
+                    id="admin-end-date",
+                    date=today,
+                    display_format="YYYY-MM-DD",
+                    className="date-input"
+                ),
+            ], className="date-range-row"),
+        ]),
+        
+        # Quick select buttons
+        html.Div([
+            dbc.Button("Last 7", id="admin-btn-last-7-days", color="light", size="sm", className="date-button me-1"),
+            dbc.Button("Last 30", id="admin-btn-last-30-days", color="light", size="sm", className="date-button me-1"),
+            dbc.Button("This Month", id="admin-btn-this-month", color="light", size="sm", className="date-button"),
+        ], className="date-button-group"),
+        
+        # Data store for date range (for callbacks to use)
+        dcc.Store(id="admin-date-range", data={
+            "start_date": week_ago.isoformat(),
+            "end_date": today.isoformat(),
+        })
+    ], className="date-selector-container border-0")
 
-# Callback to handle date mode selection buttons
-@callback(
-    [Output("admin-single-date-btn", "color"),
-     Output("admin-last-7-btn", "color"),
-     Output("admin-last-30-btn", "color"),
-     Output("admin-all-time-btn", "color"),
-     Output("admin-single-date-container", "style"),
-     Output("admin-date-range-container", "style"),
-     Output("admin-date-mode", "data"),
-     Output("admin-date-range", "data")],
-    [Input("admin-single-date-btn", "n_clicks"),
-     Input("admin-last-7-btn", "n_clicks"),
-     Input("admin-last-30-btn", "n_clicks"),
-     Input("admin-all-time-btn", "n_clicks")],
-    [State("admin-date-picker", "date"),
-     State("admin-start-date", "date"),
-     State("admin-end-date", "date"),
-     State("admin-date-range", "data")]
-)
-def update_date_selection_mode(n_single, n_7days, n_30days, n_all_time, 
-                            single_date, start_date, end_date, current_range):
-    """Update the date selection mode based on which button was clicked"""
-    ctx = callback_context
-    if not ctx.triggered:
-        # Default to single date mode
-        return "primary", "secondary", "secondary", "secondary", \
-               {"display": "block"}, {"display": "none"}, "single", \
-               {"mode": "single", "start_date": None, "end_date": single_date}
-               
-    # Get which button was clicked
-    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    
-    # We get the date from single_date or end_date
-    today = datetime.strptime(single_date, "%Y-%m-%d").date() if single_date else end_date
-    
-    if button_id == "admin-single-date-btn":
-        # Single date mode
-        return "primary", "secondary", "secondary", "secondary", \
-               {"display": "block"}, {"display": "none"}, "single", \
-               {"mode": "single", "start_date": None, "end_date": single_date}
-               
-    elif button_id == "admin-last-7-btn":
-        # Last 7 days mode
-        week_ago = (today - timedelta(days=6)).isoformat()
-        return "secondary", "primary", "secondary", "secondary", \
-               {"display": "none"}, {"display": "block"}, "range", \
-               {"mode": "7days", "start_date": week_ago, "end_date": today.isoformat()}
-               
-    elif button_id == "admin-last-30-btn":
-        # Last 30 days mode
-        month_ago = (today - timedelta(days=29)).isoformat()
-        return "secondary", "secondary", "primary", "secondary", \
-               {"display": "none"}, {"display": "block"}, "range", \
-               {"mode": "30days", "start_date": month_ago, "end_date": today.isoformat()}
-               
-    elif button_id == "admin-all-time-btn":
-        # All time mode - set start date to 1 year ago by default
-        year_ago = (today - timedelta(days=365)).isoformat()
-        return "secondary", "secondary", "secondary", "primary", \
-               {"display": "none"}, {"display": "block"}, "range", \
-               {"mode": "all", "start_date": year_ago, "end_date": today.isoformat()}
-               
-    # Fallback to single date mode
-    return "primary", "secondary", "secondary", "secondary", \
-           {"display": "block"}, {"display": "none"}, "single", \
-           {"mode": "single", "start_date": None, "end_date": single_date}
-
-# Callback to update date range pickers when mode changes
 @callback(
     [Output("admin-start-date", "date"),
-     Output("admin-end-date", "date")],
-    Input("admin-date-range", "data"),
-    prevent_initial_call=True
-)
-def update_date_range_pickers(date_range):
-    """Update the date range picker values when the mode changes"""
-    if date_range["mode"] == "single":
-        return no_update, no_update
-        
-    return date_range["start_date"], date_range["end_date"]
-
-# Callback to update date range data when pickers change
-@callback(
-    Output("admin-date-range", "data", allow_duplicate=True),
-    [Input("admin-date-picker", "date"),
+     Output("admin-end-date", "date"),
+     Output("admin-date-range", "data")],
+    [Input("admin-btn-last-7-days", "n_clicks"),
+     Input("admin-btn-last-30-days", "n_clicks"),
+     Input("admin-btn-this-month", "n_clicks"),
      Input("admin-start-date", "date"),
      Input("admin-end-date", "date")],
-    State("admin-date-mode", "data"),
+    [State("admin-date-range", "data")],
     prevent_initial_call=True
 )
-def update_date_range_from_pickers(single_date, start_date, end_date, mode):
-    """Update the date range data when the pickers change"""
+def update_admin_date_range(n_last_7, n_last_30, n_this_month, start_date, end_date, current_data):
+    """Update the date range based on button clicks or direct date changes"""
     ctx = callback_context
-    if not ctx.triggered:
-        raise PreventUpdate
-        
-    trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
     
-    if trigger_id == "admin-date-picker" and mode == "single":
-        return {"mode": "single", "start_date": None, "end_date": single_date}
-        
-    elif (trigger_id == "admin-start-date" or trigger_id == "admin-end-date") and mode == "range":
-        # If the end date is before the start date, change start date to end date
-        if trigger_id == "admin-start-date" and end_date and start_date > end_date:
+    if not ctx.triggered:
+        return start_date, end_date, current_data
+    
+    trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    current_end_date = datetime.now().date() if end_date is None else end_date
+    
+    # If end_date is string, convert to date
+    if isinstance(current_end_date, str):
+        current_end_date = datetime.strptime(current_end_date, "%Y-%m-%d").date()
+    
+    # For direct date changes from the date pickers
+    if trigger_id in ["admin-start-date", "admin-end-date"]:
+        if trigger_id == "admin-start-date" and start_date > end_date:
+            # If start date is after end date, adjust end date
             end_date = start_date
-        elif trigger_id == "admin-end-date" and start_date and end_date < start_date:
+        elif trigger_id == "admin-end-date" and end_date < start_date:
+            # If end date is before start date, adjust start date
             start_date = end_date
-        return {"mode": "custom", "start_date": start_date, "end_date": end_date}
-        
-    raise PreventUpdate
+            
+        return start_date, end_date, {
+            "start_date": start_date if isinstance(start_date, str) else start_date.isoformat(),
+            "end_date": end_date if isinstance(end_date, str) else end_date.isoformat()
+        }
+    
+    # For button clicks
+    today = current_end_date
+    
+    if trigger_id == "admin-btn-last-7-days":
+        start_date = today - timedelta(days=6)
+        end_date = today
+    elif trigger_id == "admin-btn-last-30-days":
+        start_date = today - timedelta(days=29)
+        end_date = today
+    elif trigger_id == "admin-btn-this-month":
+        start_date = today.replace(day=1)
+        # Calculate end of month
+        if today.month == 12:
+            next_month = today.replace(year=today.year+1, month=1, day=1)
+        else:
+            next_month = today.replace(month=today.month+1, day=1)
+        end_date = next_month - timedelta(days=1)
+    else:
+        # No change
+        return start_date, end_date, current_data
+    
+    return start_date, end_date, {
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat()
+    }
