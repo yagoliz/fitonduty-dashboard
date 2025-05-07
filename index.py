@@ -53,8 +53,9 @@ def login(n_clicks, username, password):
         user_data = get_user_by_username(username)
         
         if not user_data:
+            print(f"User {username} not found in database.")
             return dash.no_update, html.Div(
-                'User not found', 
+                'Login failed', 
                 style={'color': 'red', 'fontWeight': 'bold', 'textAlign': 'center'}
             )
         
@@ -70,13 +71,15 @@ def login(n_clicks, username, password):
             if success:
                 return '/', f'Logged in as {user.display_name}'
             else:
+                print("Login session creation failed.")
                 return dash.no_update, html.Div(
                     'Login failed', 
                     style={'color': 'red', 'fontWeight': 'bold', 'textAlign': 'center'}
                 )
         else:
+            print(f"Password check failed for user {username}.")
             return dash.no_update, html.Div(
-                'Incorrect password', 
+                'Login failed', 
                 style={'color': 'red', 'fontWeight': 'bold', 'textAlign': 'center'}
             )
             

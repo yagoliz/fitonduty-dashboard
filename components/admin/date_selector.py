@@ -5,10 +5,11 @@ from dash import html, dcc, callback, Input, Output, State, callback_context
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 
+
 def create_admin_date_selector():
     """
-    Create a more compact date selector component for admin dashboard
-    that matches the participant dashboard selector
+    Create a date selector component for admin dashboard
+    without card styling
     
     Returns:
         A dash component with date selection controls
@@ -18,7 +19,7 @@ def create_admin_date_selector():
     week_ago = today - timedelta(days=6)
     
     return html.Div([
-        html.H6("Select Date Range", className="mb-2"),
+        html.H5("Select Date Range", className="mb-2"),
         
         # More compact From/To layout
         html.Div([
@@ -55,7 +56,7 @@ def create_admin_date_selector():
             "start_date": week_ago.isoformat(),
             "end_date": today.isoformat(),
         })
-    ], className="date-selector-container border-0")
+    ], className="date-selector") 
 
 @callback(
     [Output("admin-start-date", "date"),

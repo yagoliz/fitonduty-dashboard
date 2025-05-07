@@ -51,7 +51,9 @@ def create_group_bar_chart(df, x_col, y_col, title, y_label, color):
         title=title,
         xaxis_title='Group',
         yaxis_title=y_label,
-        margin=dict(l=40, r=40, t=60, b=40),
+        autosize=True,
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=None,
         template='plotly_white'
     )
     
@@ -79,7 +81,9 @@ def create_participant_bar_chart(df, x_col, y_cols, names, colors, title, y_labe
         xaxis_title='Participant',
         yaxis_title=y_label,
         barmode='group',
-        margin=dict(l=40, r=40, t=60, b=60),
+        autosize=True,
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=None,
         template='plotly_white',
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
@@ -122,19 +126,21 @@ def create_history_line_chart(df, y_cols, names, colors, title, y_label, add_ran
             font=dict(size=10, color="green")
         )
     
-    fig.update_layout(
-        title=title,
-        xaxis_title='Date',
-        yaxis_title=y_label,
-        margin=dict(l=40, r=40, t=60, b=40),
-        template='plotly_white',
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-    
     # Format x-axis dates
     fig.update_xaxes(
         tickformat="%b %d",
         tickangle=-45
+    )
+
+    fig.update_layout(
+        title=title,
+        xaxis_title='Date',
+        yaxis_title=y_label,
+        autosize=True,
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=None,
+        template='plotly_white',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     
     return fig

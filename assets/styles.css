@@ -289,9 +289,10 @@ h6 {
 footer {
     margin-top: 2rem;
     padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
-    color: rgba(0, 0, 0, 0.6);
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    /* padding-bottom: 1.5rem; */
+    /* color: rgba(0, 0, 0, 0.6); */
+    /* border-top: 1px solid rgba(0, 0, 0, 0.1); */
+    background-color: white;
 }
 
 /* Progress indicators */
@@ -351,7 +352,7 @@ footer {
 }
 
 .date-selector-container {
-    background-color: #f8f9fa;
+    background-color: var(--light);
     border-radius: 8px;
     padding: 0.75rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -435,9 +436,10 @@ footer {
 /* Sidebarrrrrrr */
 
 :root {
-    --sidebar-width: 450px; /* Set your desired width here */
+    --sidebar-width: 450px;
+    /* Set your desired width here */
     --toggle-width: 45px;
-  }
+}
 
 /* Main layout container */
 .dashboard-container {
@@ -456,12 +458,12 @@ footer {
     left: 0;
     width: var(--sidebar-width);
     z-index: 1030;
-    background-color: #f8f9fa;
+    background-color: var(--light);
     border-right: 1px solid #dee2e6;
     overflow-y: auto;
     transition: transform 0.3s ease;
     transform: translateX(0);
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     padding-top: 15px;
 }
 
@@ -474,7 +476,8 @@ footer {
 
 /* Collapsed sidebar state */
 .sidebar-collapsed {
-    transform: translateX(calc(-1 * var(--sidebar-width))); /* Match the wider sidebar width */
+    transform: translateX(calc(-1 * var(--sidebar-width)));
+    /* Match the wider sidebar width */
 }
 
 /* Toggle button container - separate from sidebar */
@@ -483,12 +486,13 @@ footer {
     left: calc(var(--sidebar-width) - var(--toggle-width) - 20px);
     top: 2.5%;
     transform: translateY(-50%);
-    z-index: 1040; /* Above sidebar */
+    z-index: 1040;
+    /* Above sidebar */
     transition: left 0.3s ease;
 }
 
 /* When sidebar is collapsed, move toggle container to left edge */
-.sidebar-collapsed ~ .sidebar-toggle-container {
+.sidebar-collapsed~.sidebar-toggle-container {
     left: 0;
 }
 
@@ -500,12 +504,12 @@ footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f8f9fa;
+    background-color: var(--light);
     /* border: 1px solid #dee2e6; */
     border: none;
     border-radius: 0 4px 4px 0;
     font-size: 16px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     cursor: pointer;
 }
 
@@ -524,54 +528,49 @@ footer {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: #f8f9fa;
+    background-color: white;
 }
 
 /* Main content when sidebar is collapsed */
-.sidebar-collapsed ~ .main-content-column {
+.sidebar-collapsed~.main-content-column {
     margin-left: 0;
     width: 100%;
 }
 
 /* Content container - now with top padding since there's no navbar */
 .main-content-container {
-    padding: 30px; /* Increased top padding */
+    padding: 30px;
+    /* Increased top padding */
     flex: 1;
 }
 
 /* Dashboard title in main content */
 .dashboard-title {
-    color: #2A65A3; /* Match blue theme */
+    color: #2A65A3;
+    /* Match blue theme */
     margin-bottom: 30px;
     font-weight: 500;
 }
 
-/* Footer styling */
-footer {
-    margin-top: auto;
-    padding: 15px 0;
-    border-top: 1px solid #dee2e6;
-    background-color: #f8f9fa;
-}
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .sidebar-column {
         transform: translateX(calc(-1 * var(--sidebar-width)));
     }
-    
+
     .sidebar-toggle-container {
         left: 0;
     }
-    
+
     .sidebar-column.sidebar-mobile-open {
         transform: translateX(0);
     }
-    
-    .sidebar-mobile-open ~ .sidebar-toggle-container {
+
+    .sidebar-mobile-open~.sidebar-toggle-container {
         left: var(--sidebar-width);
     }
-    
+
     .main-content-column {
         margin-left: 0;
         width: 100%;
