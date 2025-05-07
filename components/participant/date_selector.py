@@ -14,9 +14,7 @@ def create_date_selector():
     today = datetime.now().date()
     week_ago = today - timedelta(days=6)
     
-    return dbc.Row([
-        dbc.Col([
-            dbc.Card([
+    return dbc.Card([
                 dbc.CardBody([
                     html.H5("Select Date Range", className="card-title"),
                     dbc.Row([
@@ -48,8 +46,6 @@ def create_date_selector():
                     ], className="mt-2"),
                 ])
             ])
-        ], width=12)
-    ], className="mb-4")
 
 @callback(
     [Output("participant-start-date", "date"),
@@ -69,7 +65,20 @@ def update_date_range(n_last_7, n_last_30, n_this_month, current_start, current_
         return current_start, current_end
     
     button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    today = datetime.now().date()
+
+    # Get the end date. If not set, use today
+    if current_end is None:
+        current_end = datetime.now().date()
+
+    # If end_date is string, convert to date
+    if isinstance(current_end, str):
+        current_end = datetime.strptime(current_end, "%Y-%m-%d").date()
+
+    # Get the start date. If not set, use 7 days before today
+    if current_start is None:
+        current_start = current_end - timedelta(days=6)
+
+    today = current_end
     
     if button_id == "btn-last-7-days":
         start_date = today - timedelta(days=6)
@@ -79,7 +88,7 @@ def update_date_range(n_last_7, n_last_30, n_this_month, current_start, current_
         end_date = today
     elif button_id == "btn-this-month":
         start_date = today.replace(day=1)
-        end_date = today
+        end_date = today.replace(day=1) + timedelta(days=31)
     else:
         return current_start, current_end
     

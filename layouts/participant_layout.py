@@ -1,8 +1,9 @@
-# layouts/participant_layout.py
+from datetime import datetime
+
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 from flask_login import current_user
-from datetime import datetime
+import pandas as pd
 
 # Import components
 from components.participant.date_selector import create_date_selector
@@ -31,7 +32,7 @@ def create_layout():
                 html.A(
                     dbc.Row([
                         dbc.Col(html.Img(src="/assets/logo.svg", height="30px"), width="auto"),
-                        dbc.Col(dbc.NavbarBrand("Health Dashboard", className="ms-2")),
+                        dbc.Col(dbc.NavbarBrand("FitonDuty | Dashboard", className="ms-2")),
                     ],
                     align="center",
                     className="g-0",
@@ -55,7 +56,7 @@ def create_layout():
         # Header section with user info
         dbc.Row([
             dbc.Col([
-                html.H1("Your Health Dashboard", className="display-4"),
+                html.H1("Your FitonDuty Dashboard", className="display-4"),
                 html.P(f"Welcome {display_name}!", className="lead"),
                 html.Hr(className="my-4"),
                 html.P(f"Group: {group}" if group else "", className="lead"),
@@ -63,7 +64,16 @@ def create_layout():
         ], className="mb-4"),
         
         # Date selector component
-        create_date_selector(),
+        dbc.Row([
+            dbc.Col([
+                html.H5("Dates of Interest", className="mb-2"),
+                create_date_selector()
+            ], width=4),
+            dbc.Col([
+                html.H5("Your Health Summary"),
+                html.Div(id="participant-details-container", className="mb-2"),
+            ], width=8)
+        ], className="mb-4"),
         
         # Health metrics component
         create_health_metrics(),

@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 
 layout = dbc.Container(
     [
-        html.H1("Healthcare Dashboard - Login", className="text-center my-4"),
+        html.H1("FitonDuty Dashboard - Login", className="text-center my-4"),
         dbc.Row(
             dbc.Col(
                 dbc.Card(

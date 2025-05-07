@@ -21,7 +21,8 @@ app = dash.Dash(
     server=server,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True,
-    meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}]
+    meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+    title="FitonDuty | Dashboard",
 )
 
 # Setup Flask-Login
