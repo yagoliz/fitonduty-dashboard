@@ -1,0 +1,64 @@
+/* assets/css/chart-styles.css */
+
+/* Chart container enhancements */
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure graph containers take full height */
+.chart-container {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Ensure plotly components expand properly */
+.js-plotly-plot,
+.plot-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.main-svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Make sure card bodies can grow to fill available space */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* When a card body contains a metrics summary and a chart, 
+   make sure the chart takes up all remaining space */
+.card-body .metrics-summary + .chart-wrapper {
+    flex: 1;
+    margin-top: 10px;
+    min-height: 200px;
+}
+
+/* For admin view charts */
+#admin-data-visualizations .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+#admin-data-visualizations .card-body .chart-container {
+    flex: 1;
+    min-height: 280px;
+    position: relative !important;
+}
+
+/* Add transition for smooth resize */
+.js-plotly-plot {
+    transition: width 0.3s ease, height 0.3s ease;
+}
