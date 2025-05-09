@@ -14,3 +14,8 @@ dependencies = [
     "sqlalchemy>=2.0.40",
 ]
 
+[dependency-groups]
+dev = [
+    "pyyaml>=6.0.2",
+]
+

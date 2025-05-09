@@ -1,6 +1,11 @@
 # Custom
 .vscode
 .DS_Store
+*yaml
+
+# Env data
+env.sh
+reset_db.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

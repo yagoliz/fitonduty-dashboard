@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import numpy as np
 
 # Get database connection string from environment variable or use default for development
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://username:password@localhost:5432/health_dashboard')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://username:password@localhost:5432/dashboard')
 
 # Create SQLAlchemy engine with connection pooling
 engine = create_engine(
