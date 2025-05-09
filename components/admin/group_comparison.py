@@ -25,17 +25,24 @@ def create_group_comparison(group_df):
                 dbc.Card([
                     dbc.CardHeader(html.H5("Average Resting Heart Rate by Group", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_group_bar_chart(
-                                group_df, 
-                                'group_name', 
-                                'avg_resting_hr', 
-                                'Average Resting Heart Rate by Group',
-                                'bpm',
-                                '#1976D2'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_group_bar_chart(
+                                    group_df, 
+                                    'group_name', 
+                                    'avg_resting_hr', 
+                                    'Average Resting Heart Rate by Group',
+                                    'bpm',
+                                    '#1976D2'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
@@ -45,17 +52,24 @@ def create_group_comparison(group_df):
                 dbc.Card([
                     dbc.CardHeader(html.H5("Average Sleep Hours by Group", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_group_bar_chart(
-                                group_df, 
-                                'group_name', 
-                                'avg_sleep_hours', 
-                                'Average Sleep Hours by Group',
-                                'hours',
-                                '#4CAF50'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_group_bar_chart(
+                                    group_df, 
+                                    'group_name', 
+                                    'avg_sleep_hours', 
+                                    'Average Sleep Hours by Group',
+                                    'hours',
+                                    '#4CAF50'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
@@ -68,17 +82,24 @@ def create_group_comparison(group_df):
                 dbc.Card([
                     dbc.CardHeader(html.H5("Average HRV by Group", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_group_bar_chart(
-                                group_df, 
-                                'group_name', 
-                                'avg_hrv_rest', 
-                                'Average Heart Rate Variability by Group',
-                                'ms',
-                                '#673AB7'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_group_bar_chart(
+                                    group_df, 
+                                    'group_name', 
+                                    'avg_hrv_rest', 
+                                    'Average Heart Rate Variability by Group',
+                                    'ms',
+                                    '#673AB7'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),

@@ -26,18 +26,25 @@ def create_group_summary(group_df, group_name):
                 dbc.Card([
                     dbc.CardHeader(html.H5("Heart Rate Comparison", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_participant_bar_chart(
-                                group_df, 
-                                'participant_name', 
-                                ['resting_hr', 'max_hr'],
-                                ['Resting HR', 'Max HR'],
-                                ['#1976D2', '#D32F2F'],
-                                'Heart Rate Comparison',
-                                'bpm'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_participant_bar_chart(
+                                    group_df, 
+                                    'participant_name', 
+                                    ['resting_hr', 'max_hr'],
+                                    ['Resting HR', 'Max HR'],
+                                    ['#1976D2', '#D32F2F'],
+                                    'Heart Rate Comparison',
+                                    'bpm'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
@@ -47,18 +54,25 @@ def create_group_summary(group_df, group_name):
                 dbc.Card([
                     dbc.CardHeader(html.H5("Sleep Comparison", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_participant_bar_chart(
-                                group_df, 
-                                'participant_name', 
-                                ['sleep_hours'],
-                                ['Sleep Hours'],
-                                ['#4CAF50'],
-                                'Sleep Hours Comparison',
-                                'hours'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_participant_bar_chart(
+                                    group_df, 
+                                    'participant_name', 
+                                    ['sleep_hours'],
+                                    ['Sleep Hours'],
+                                    ['#4CAF50'],
+                                    'Sleep Hours Comparison',
+                                    'hours'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
@@ -71,18 +85,25 @@ def create_group_summary(group_df, group_name):
                 dbc.Card([
                     dbc.CardHeader(html.H5("HRV Comparison", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_participant_bar_chart(
-                                group_df, 
-                                'participant_name', 
-                                ['hrv_rest'],
-                                ['HRV'],
-                                ['#673AB7'],
-                                'Heart Rate Variability Comparison',
-                                'ms'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_participant_bar_chart(
+                                    group_df, 
+                                    'participant_name', 
+                                    ['hrv_rest'],
+                                    ['HRV'],
+                                    ['#673AB7'],
+                                    'Heart Rate Variability Comparison',
+                                    'ms'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),

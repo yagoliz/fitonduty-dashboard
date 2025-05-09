@@ -30,7 +30,15 @@ def create_empty_chart(message):
                 }
             }
         ],
-        height=300
+        autosize=True,
+        height=None,
+        margin=dict(l=20, r=20, t=40, b=20)
+    )
+
+    fig.update_layout(
+        # These ensure proper rendering inside the container
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
@@ -190,6 +198,8 @@ def create_dual_axis_chart(df, x_col, y1_col, y2_col, y1_name, y2_name, y1_color
             overlaying="y",
             side="right"
         ),
+        autosize=True,
+        height=None,
         margin=dict(l=60, r=60, t=60, b=60),
         template="plotly_white",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)

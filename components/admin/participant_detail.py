@@ -1,4 +1,3 @@
-# components/admin/participant_detail.py
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 from utils.visualization import create_history_line_chart, create_heart_rate_zones_chart
@@ -35,7 +34,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                 ], color="light", outline=True)
             ], width=6, md=3, className="mb-4"),
 
-                        # Max HR card
+            # Max HR card
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -73,17 +72,24 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                 dbc.Card([
                     dbc.CardHeader(html.H5(f"{title_prefix} Heart Rate History", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_history_line_chart(
-                                df_history,
-                                ['resting_hr', 'max_hr'],
-                                ['Resting HR', 'Max HR'],
-                                ['#1976D2', '#D32F2F'],
-                                'Heart Rate History',
-                                'bpm'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_history_line_chart(
+                                    df_history,
+                                    ['resting_hr', 'max_hr'],
+                                    ['Resting HR', 'Max HR'],
+                                    ['#1976D2', '#D32F2F'],
+                                    'Heart Rate History',
+                                    'bpm'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
@@ -93,20 +99,27 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                 dbc.Card([
                     dbc.CardHeader(html.H5(f"{title_prefix} Sleep History", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_history_line_chart(
-                                df_history,
-                                ['sleep_hours'],
-                                ['Sleep Hours'],
-                                ['#4CAF50'],
-                                'Sleep Hours History',
-                                'hours',
-                                add_range=True,
-                                range_min=7,
-                                range_max=9
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_history_line_chart(
+                                    df_history,
+                                    ['sleep_hours'],
+                                    ['Sleep Hours'],
+                                    ['#4CAF50'],
+                                    'Sleep Hours History',
+                                    'hours',
+                                    add_range=True,
+                                    range_min=7,
+                                    range_max=9
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
@@ -118,17 +131,24 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                 dbc.Card([
                     dbc.CardHeader(html.H5(f"{title_prefix} HRV History", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_history_line_chart(
-                                df_history,
-                                ['hrv_rest'],
-                                ['HRV'],
-                                ['#673AB7'],
-                                'Heart Rate Variability History',
-                                'ms'
-                            ),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_history_line_chart(
+                                    df_history,
+                                    ['hrv_rest'],
+                                    ['HRV'],
+                                    ['#673AB7'],
+                                    'Heart Rate Variability History',
+                                    'ms'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
@@ -138,10 +158,17 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                 dbc.Card([
                     dbc.CardHeader(html.H5(f"{title_prefix} Heart Rate Zones", className="card-title")),
                     dbc.CardBody([
-                        dcc.Graph(
-                            figure=create_heart_rate_zones_chart(df_single_day),
-                            style={"height": "300px"}
-                        )
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_heart_rate_zones_chart(df_single_day),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),

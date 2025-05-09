@@ -1,5 +1,3 @@
-/* assets/css/chart-styles.css */
-
 /* Chart container enhancements */
 .chart-wrapper {
     position: relative;
@@ -60,5 +58,38 @@
 
 /* Add transition for smooth resize */
 .js-plotly-plot {
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+#admin-data-visualizations .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#admin-data-visualizations .chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#admin-data-visualizations .chart-container {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Force admin charts to redraw when sidebar state changes */
+.sidebar-collapsed ~ #main-content-column #admin-data-visualizations .js-plotly-plot,
+.sidebar-collapsed ~ #main-content-column #admin-data-visualizations .plot-container {
+    width: 100% !important;
+    height: 100% !important;
     transition: width 0.3s ease, height 0.3s ease;
 }
