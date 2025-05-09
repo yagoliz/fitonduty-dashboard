@@ -1,7 +1,10 @@
+import dash
 from dash import dcc, html, callback, Input, Output, State
 from dash.exceptions import PreventUpdate
-import dash
+import dash_bootstrap_components as dbc
 from flask_login import logout_user, current_user
+
+# Custom app imports
 from app import app, login_and_create_session
 from utils.database import get_user_by_username
 
@@ -19,18 +22,18 @@ app.layout = html.Div([
     Input('url', 'pathname')
 )
 def display_page(pathname):
-    if pathname == '/login' or not current_user.is_authenticated:
+    if not current_user.is_authenticated:
         return login_layout.layout
     
     # User is authenticated, check role
     if current_user.is_authenticated:  # This is redundant but clarifies intent
+        if pathname != '/':
+            dbc.Alert(color='warning', children='You are already logged in. Redirecting to dashboard...')
+
         if current_user.role == 'admin':
-            if pathname == '/':
-                return admin_layout.create_layout()
-            # Add other admin paths here
+            return admin_layout.create_layout()
         else:  # Participant view
-            if pathname == '/':
-                return participant_layout.create_layout()
+            return participant_layout.create_layout()
     
     # No matching route found
     return error_layouts.not_found_layout

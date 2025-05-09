@@ -1,5 +1,17 @@
-from dash import html
+from dash import html, clientside_callback, ClientsideFunction, Output, Input
 import dash_bootstrap_components as dbc
+
+def create_enter_key_callback():
+    clientside_callback(
+        ClientsideFunction(
+            namespace='clientside',
+            function_name='handleEnterKey'
+        ),
+        Output('login-button', 'n_clicks', allow_duplicate=True),
+        Input('password-input', 'n_submit'),
+        prevent_initial_call=True
+    )
+
 
 layout = dbc.Container(
     [
@@ -14,13 +26,15 @@ layout = dbc.Container(
                                 id="username-input", 
                                 placeholder="Username", 
                                 type="text",
-                                className="mb-3"
+                                className="mb-3",
+                                n_submit=0
                             ),
                             dbc.Input(
                                 id="password-input", 
                                 placeholder="Password", 
                                 type="password",
-                                className="mb-3"
+                                className="mb-3",
+                                n_submit=0
                             ),
                             dbc.Button(
                                 "Login", 
@@ -40,3 +54,5 @@ layout = dbc.Container(
     fluid=True,
     className="vh-100 d-flex flex-column justify-content-center"
 )
+
+create_enter_key_callback()
