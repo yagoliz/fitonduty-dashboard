@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument('--seed', action='store_true', help='Seed the database with sample data')
     parser.add_argument('--config', default='config/db_seed.yaml', help='Path to configuration file')
     parser.add_argument('--db-url', help='Database connection URL (overrides config file)')
+    parser.add_argument('--set-permissions', action='store_true', help='Set user permissions (in case setup_database.sh is not run)')
     return parser.parse_args()
 
 def load_config(config_path):
@@ -234,7 +235,7 @@ def set_user_permissions(engine):
         GRANT SELECT ON ALL TABLES IN SCHEMA public TO dashboard_user;
         """,
         """
-        GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO dashboard_user;
+        GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA public TO dashboard_user;
         """,
         
         # Grant specific write permissions
@@ -242,13 +243,34 @@ def set_user_permissions(engine):
         GRANT INSERT, UPDATE, DELETE ON sessions TO dashboard_user;
         """,
         """
+        GRANT USAGE ON SEQUENCE sessions_id_seq TO dashboard_user;
+        """,
+        """
         GRANT INSERT, UPDATE ON health_metrics TO dashboard_user;
+        """,
+        """
+        GRANT USAGE ON SEQUENCE health_metrics_id_seq TO dashboard_user;
         """,
         """
         GRANT INSERT, UPDATE ON heart_rate_zones TO dashboard_user;
         """,
         """
+        GRANT USAGE ON SEQUENCE heart_rate_zones_id_seq TO dashboard_user;
+        """,
+        """
         GRANT INSERT, UPDATE ON user_notes TO dashboard_user;
+        """,
+        """
+        GRANT USAGE ON SEQUENCE user_notes_id_seq TO dashboard_user;
+        """,
+        """
+        GRANT SELECT ON users TO dashboard_user;
+        """,
+        """
+        GRANT UPDATE (last_login) ON users TO dashboard_user;
+        """,
+        """
+        GRANT USAGE ON SEQUENCE users_id_seq TO dashboard_user;
         """,
         
         # Default privileges for future objects
@@ -258,7 +280,7 @@ def set_user_permissions(engine):
         """,
         """
         ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
-        GRANT SELECT ON SEQUENCES TO dashboard_user;
+        GRANT SELECT, USAGE ON SEQUENCES TO dashboard_user;
         """,
         """
         ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
@@ -717,11 +739,12 @@ def main():
             sys.exit(1)
 
         # Set permissions
-        try:
-            set_user_permissions(engine)
-        except Exception as e:
-            print(f"Error setting permissions: {e}")
-            sys.exit(1)
+        if args.set_permissions:
+            try:
+                set_user_permissions(engine)
+            except Exception as e:
+                print(f"Error setting permissions: {e}")
+                sys.exit(1)
         
         # Seed database if requested
         if args.seed:

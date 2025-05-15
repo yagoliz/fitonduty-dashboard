@@ -148,55 +148,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Step 4: Set up the permissions
-echo "Setting up permissions..."
-cat > create_roles.sql <<EOF
--- Permissions for dashboard_user role
-
--- Grant usage on schema
-GRANT USAGE ON SCHEMA public TO dashboard_user;
-
--- Grant read access to all tables to dashboard_user
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO dashboard_user;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO dashboard_user;
-
--- Grant write access to specific tables that the application needs to modify
-GRANT INSERT, UPDATE, DELETE ON sessions TO dashboard_user;
-GRANT INSERT, UPDATE ON health_metrics TO dashboard_user;
-GRANT INSERT, UPDATE ON heart_rate_zones TO dashboard_user;
-GRANT INSERT, UPDATE ON user_notes TO dashboard_user;
-GRANT INSERT, UPDATE ON users TO dashboard_user;
--- Add other tables as needed
-
--- Grant execute permission on functions
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO dashboard_user;
-
--- Set default privileges for future objects
-ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
-GRANT SELECT ON TABLES TO dashboard_user;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
-GRANT SELECT ON SEQUENCES TO dashboard_user;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
-GRANT EXECUTE ON FUNCTIONS TO dashboard_user;
-EOF
-
-psql -h $DBHOST -p $DBPORT -U $PG_SUPERUSER -d $DBNAME -f create_roles.sql
-if [ $? -ne 0 ]; then
-  echo "Warning: Some permissions couldn't be set. This may be normal if tables don't exist yet."
-fi
-rm create_roles.sql
-
-# Step 5: Create .env file with connection strings if it doesn't exist or we're resetting
+# Step 4: Create .env file with connection strings if it doesn't exist or we're resetting
 if [ ! -f .env ] || [ "$RESET" = true ]; then
   echo "Creating .env file with database connection details..."
   cat > .env <<EOF
-# Database connection strings
 DATABASE_URL=postgresql://dashboard_user:$DASHBOARD_USER_PASSWORD@$DBHOST:$DBPORT/$DBNAME
 DASHBOARD_ADMIN_DB_URL=postgresql://dashboard_admin:$DASHBOARD_ADMIN_PASSWORD@$DBHOST:$DBPORT/$DBNAME
 
-# Other configuration
 SECRET_KEY=$(openssl rand -hex 24)
 ENV=$ENV
 EOF
@@ -205,10 +163,10 @@ else
   echo ".env file already exists, not modifying"
 fi
 
-# Step 6: Initialize database schema and seed data if requested
+# Step 5: Initialize database schema and seed data if requested
 if [ "$SEED" = true ]; then
   echo "Initializing database schema and seeding data..."
-  python init_db.py --db-url "postgresql://dashboard_admin:$DASHBOARD_ADMIN_PASSWORD@$DBHOST:$DBPORT/$DBNAME" --seed
+  python init_db.py --db-url "postgresql://dashboard_admin:$DASHBOARD_ADMIN_PASSWORD@$DBHOST:$DBPORT/$DBNAME" --seed --config config/db_seed.yaml --set-permissions
   
   if [ $? -ne 0 ]; then
     echo "Warning: Database initialization might not have completed successfully."
@@ -217,7 +175,7 @@ if [ "$SEED" = true ]; then
   fi
 fi
 
-# Step 7: Update database functions
+# Step 6: Update database functions
 echo "Updating database functions..."
 python update_db_functions.py --db-url "postgresql://dashboard_admin:$DASHBOARD_ADMIN_PASSWORD@$DBHOST:$DBPORT/$DBNAME"
 
