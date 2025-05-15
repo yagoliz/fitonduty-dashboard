@@ -51,9 +51,8 @@ def create_layout():
                     navbar=True,
                 ),
             ]),
-            color="primary",
-            dark=True,
-            className="mb-4"
+            color="#0a2342",
+            className="mb-4",
         ),
         
         # Main content container

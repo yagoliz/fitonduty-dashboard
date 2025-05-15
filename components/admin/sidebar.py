@@ -111,6 +111,8 @@ def create_admin_sidebar():
                 is_open=False,
             ),
         ], className="mb-3"),
+
+        html.Hr(),
         
         # Logout button (mobile hidden, shown in navbar)
         dbc.Button(
