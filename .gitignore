@@ -4,8 +4,7 @@
 *yaml
 
 # Env data
-env.sh
-reset_db.sh
+*.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -6,7 +6,8 @@ from flask_login import current_user
 import pandas as pd
 import plotly.graph_objects as go
 
-from utils.database import load_participant_data
+from components.participant.participant_ranking import create_participant_ranking_layout
+from utils.database import load_participant_data, get_participant_ranking
 from utils.visualization import create_empty_chart, create_heart_rate_zones_chart
 
 
@@ -635,3 +636,33 @@ def update_activity_chart(start_date, end_date):
     except Exception as e:
         # Return empty chart in case of error
         return create_empty_chart(f"Error loading data: {str(e)}")
+
+
+@callback(
+    Output("participant-ranking-container", "children"),
+    [Input("participant-start-date", "date"), Input("participant-end-date", "date")],
+)
+def update_participant_ranking(start_date, end_date):
+    """Update participant ranking component"""
+    # Check if user is authenticated
+    if not current_user.is_authenticated:
+        raise PreventUpdate
+
+    user_id = current_user.id
+
+    try:
+        # Get ranking information from database
+        ranking_data = get_participant_ranking(user_id, start_date, end_date)
+        
+        if not ranking_data:
+            return html.Div(
+                dbc.Alert("Ranking information not available", color="warning"),
+                className="mb-3"
+            )
+        
+        # Create the ranking component
+        return create_participant_ranking_layout(ranking_data)
+
+    except Exception as e:
+        # Return error message in case of exception
+        return dbc.Alert(f"Error loading ranking data: {str(e)}", color="danger")

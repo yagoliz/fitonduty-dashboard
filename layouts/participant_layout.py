@@ -76,6 +76,7 @@ def create_layout():
                 dbc.Col([
                     html.H5("Your Health Summary", className="section-title"),
                     html.Div(id="participant-details-container", className="mb-3"),
+                    html.Div(id="participant-ranking-container"),
                 ], xs=12, md=7, lg=8, className="mb-4")
             ], className="mb-3"),
             

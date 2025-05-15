@@ -1,0 +1,46 @@
+.ranking-container {
+    margin-bottom: 1rem;
+}
+
+.ranking-container .table thead th {
+    background-color: var(--gray-bg);
+    font-weight: 600;
+    border-bottom-width: 2px;
+}
+
+.ranking-container .table-primary {
+    background-color: rgba(0, 119, 182, 0.1);
+    font-weight: 500;
+}
+
+.ranking-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 10px;
+    font-weight: bold;
+    color: white;
+}
+
+.ranking-1 {
+    background-color: gold;
+    color: #333;
+}
+
+.ranking-2 {
+    background-color: silver;
+    color: #333;
+}
+
+.ranking-3 {
+    background-color: #cd7f32; /* bronze */
+    color: white;
+}
+
+.ranking-other {
+    background-color: #e9ecef;
+    color: #333;
+}
