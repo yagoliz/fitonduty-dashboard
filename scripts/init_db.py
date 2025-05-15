@@ -93,8 +93,8 @@ def create_db_engine(args, config):
         return create_engine(db_url)
     
     # Option 3: Environment variable
-    if 'DATABASE_URL' in os.environ:
-        db_url = os.environ['DATABASE_URL']
+    if 'DASHBOARD_ADMIN_DB_URL' in os.environ:
+        db_url = os.environ['DASHBOARD_ADMIN_DB_URL']
         print(f"Using database URL from environment variable: {db_url}")
         return create_engine(db_url)
     
@@ -219,6 +219,64 @@ def create_tables(engine):
             conn.execute(text(statement))
     
     print("Tables created successfully!")
+
+
+def set_user_permissions(engine):
+    """
+    Grant appropriate permissions to dashboard_user role
+    """
+    permission_statements = [
+        # Grant base permissions
+        """
+        GRANT USAGE ON SCHEMA public TO dashboard_user;
+        """,
+        """
+        GRANT SELECT ON ALL TABLES IN SCHEMA public TO dashboard_user;
+        """,
+        """
+        GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO dashboard_user;
+        """,
+        
+        # Grant specific write permissions
+        """
+        GRANT INSERT, UPDATE, DELETE ON sessions TO dashboard_user;
+        """,
+        """
+        GRANT INSERT, UPDATE ON health_metrics TO dashboard_user;
+        """,
+        """
+        GRANT INSERT, UPDATE ON heart_rate_zones TO dashboard_user;
+        """,
+        """
+        GRANT INSERT, UPDATE ON user_notes TO dashboard_user;
+        """,
+        
+        # Default privileges for future objects
+        """
+        ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
+        GRANT SELECT ON TABLES TO dashboard_user;
+        """,
+        """
+        ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
+        GRANT SELECT ON SEQUENCES TO dashboard_user;
+        """,
+        """
+        ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_admin IN SCHEMA public 
+        GRANT EXECUTE ON FUNCTIONS TO dashboard_user;
+        """
+    ]
+    
+    with engine.begin() as conn:
+        for statement in permission_statements:
+            try:
+                conn.execute(text(statement))
+                print(f"Executed permission statement: {statement.strip()}")
+            except Exception as e:
+                print(f"Error setting permission: {e}")
+                print(f"Statement: {statement}")
+
+    print("User permissions set successfully!")
+
 
 def drop_tables(engine):
     """Drop all tables from the database"""
@@ -656,6 +714,13 @@ def main():
             create_tables(engine)
         except Exception as e:
             print(f"Error creating tables: {e}")
+            sys.exit(1)
+
+        # Set permissions
+        try:
+            set_user_permissions(engine)
+        except Exception as e:
+            print(f"Error setting permissions: {e}")
             sys.exit(1)
         
         # Seed database if requested

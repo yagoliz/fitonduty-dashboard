@@ -445,3 +445,40 @@ def import_mock_data(user_id, start_date, end_date, overwrite=False):
         save_health_metrics(user_id, date, metrics)
     
     return True
+
+
+def get_participant_ranking(user_id, start_date, end_date):
+    """
+    Get the participant's data consistency ranking within their group
+    
+    Args:
+        user_id: User ID
+        start_date: Start date for data range
+        end_date: End date for data range
+        
+    Returns:
+        Dictionary with ranking information
+    """
+    
+    query = text("""
+        SELECT * FROM get_participant_data_consistency_rank(:user_id, :start_date, :end_date)
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {
+                "user_id": user_id,
+                "start_date": start_date,
+                "end_date": end_date
+            })
+            row = result.fetchone()
+            
+            if row:
+                ranking_data = {}
+                for idx, col in enumerate(result.keys()):
+                    ranking_data[col] = row[idx]
+                return ranking_data
+            return None
+    except Exception as e:
+        print(f"Error getting participant ranking: {e}")
+        return None

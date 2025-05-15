@@ -1,4 +1,5 @@
 #!/bin/bash
 
-source env.sh && cd .. && python3 main.py
-
+source ../.venv/bin/activate 
+export $(cat .env | xargs)
+cd .. && python3 main.py
