@@ -56,64 +56,6 @@ def create_admin_sidebar():
         
         html.Hr(),
         
-        # Data management section
-        html.Div([
-            html.H5("Data Management", className="mb-3"),
-            
-            dbc.Button(
-                "Generate Mock Data", 
-                id="generate-mock-data-btn", 
-                color="secondary", 
-                size="sm",
-                className="w-100 mb-2"
-            ),
-            
-            dbc.Collapse(
-                dbc.Card(
-                    dbc.CardBody([
-                        dbc.Label("Date Range for Mock Data"),
-                        dbc.Row([
-                            dbc.Col([
-                                dcc.DatePickerSingle(
-                                    id="mock-data-start-date",
-                                    date=today - timedelta(days=30),
-                                    display_format="YYYY-MM-DD",
-                                    className="mb-2 w-100"
-                                ),
-                            ], width=6),
-                            dbc.Col([
-                                dcc.DatePickerSingle(
-                                    id="mock-data-end-date",
-                                    date=today,
-                                    display_format="YYYY-MM-DD",
-                                    className="mb-2 w-100"
-                                ),
-                            ], width=6),
-                        ]),
-                        dbc.Checklist(
-                            options=[{"label": "Overwrite existing data", "value": 1}],
-                            value=[],
-                            id="overwrite-data-checkbox",
-                            switch=True,
-                            className="mt-2 mb-2"
-                        ),
-                        dbc.Button(
-                            "Generate", 
-                            id="confirm-generate-data-btn", 
-                            color="primary", 
-                            size="sm",
-                            className="w-100"
-                        ),
-                        html.Div(id="generate-data-status", className="mt-2 small")
-                    ])
-                ),
-                id="mock-data-collapse",
-                is_open=False,
-            ),
-        ], className="mb-3"),
-
-        html.Hr(),
-        
         # Logout button (mobile hidden, shown in navbar)
         dbc.Button(
             "Logout", 

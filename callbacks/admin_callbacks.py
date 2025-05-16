@@ -14,7 +14,6 @@ from utils.database import (
     get_all_groups,
     load_participant_data,
     load_anomaly_data,
-    import_mock_data,
     get_user_by_id,
 )
 
@@ -451,73 +450,6 @@ def create_participant_detail_data(participant_id, start_date, end_date, mode):
         return html.Div(
             [dbc.Alert(f"Error loading participant data: {str(e)}", color="danger")]
         )
-
-
-# Toggle mock data form
-@callback(
-    Output("mock-data-collapse", "style"),
-    Input("generate-mock-data-btn", "n_clicks"),
-    State("mock-data-collapse", "style"),
-)
-def toggle_mock_data_form(n_clicks, current_style):
-    """Toggle the mock data form"""
-    if not n_clicks:
-        raise PreventUpdate
-
-    if current_style and current_style.get("display") == "block":
-        return {"display": "none"}
-    else:
-        return {"display": "block"}
-
-
-@callback(
-    Output("generate-data-status", "children"),
-    Input("confirm-generate-data-btn", "n_clicks"),
-    [
-        State("group-dropdown", "value"),
-        State("mock-data-start-date", "date"),
-        State("mock-data-end-date", "date"),
-        State("overwrite-data-checkbox", "value"),
-    ],
-    prevent_initial_call=True,
-)
-def generate_mock_data_callback(n_clicks, group_id, start_date, end_date, overwrite):
-    """Generate mock data for the selected group"""
-    if not n_clicks:
-        raise PreventUpdate
-
-    try:
-        # Convert overwrite checkbox value
-        overwrite_data = 1 in overwrite if overwrite else False
-
-        if not group_id:
-            return html.Div("Please select a group first", style={"color": "red"})
-
-        # Get all participants in the group
-        groups = get_participants_by_group(group_id)
-        if not groups or group_id not in groups:
-            return html.Div(
-                "No participants in the selected group", style={"color": "red"}
-            )
-
-        participants = groups[group_id]["participants"]
-
-        if not participants:
-            return html.Div(
-                "No participants in the selected group", style={"color": "red"}
-            )
-
-        # Generate data for the first participant
-        participant_id = participants[0]["id"]
-        success = import_mock_data(participant_id, start_date, end_date, overwrite_data)
-
-        if success:
-            return html.Div("Data generated successfully!", style={"color": "green"})
-        else:
-            return html.Div("Error generating data", style={"color": "red"})
-    except Exception as e:
-        print(f"Error generating mock data: {e}")
-        return html.Div(f"Error: {str(e)}", style={"color": "red"})
 
 
 @callback(
