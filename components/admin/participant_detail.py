@@ -64,7 +64,60 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                 ], color="light", outline=True)
             ], width=6, md=3, className="mb-4"),
         ]),
+
+        html.Div([
+            html.H4(f"{title_prefix} Anomaly Detection Results", className="mb-3"),
+            dbc.Row([
+                # Daily anomaly timeline
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Daily Anomaly Timeline", className="card-title")),
+                        dbc.CardBody([
+                            html.Div(id="admin-anomaly-summary", className="metrics-summary"),
+                            html.Div([
+                                dcc.Graph(
+                                    id="admin-anomaly-timeline-chart", 
+                                    className="chart-container",
+                                    config={
+                                        'displayModeBar': False,
+                                        'responsive': True
+                                    },
+                                    style={
+                                        'width': '100%',
+                                        'height': '100%'
+                                    }
+                                )
+                            ], className="chart-wrapper", style={"height": "300px"})
+                        ])
+                    ])
+                ], width=12, lg=6, className="mb-4"),
+                
+                # Weekly heatmap
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Weekly Anomaly Heatmap", className="card-title")),
+                        dbc.CardBody([
+                            html.Div([
+                                dcc.Graph(
+                                    id="admin-anomaly-heatmap-chart", 
+                                    className="chart-container",
+                                    config={
+                                        'displayModeBar': False,
+                                        'responsive': True
+                                    },
+                                    style={
+                                        'width': '100%',
+                                        'height': '100%'
+                                    }
+                                )
+                            ], className="chart-wrapper", style={"height": "300px"})
+                        ])
+                    ])
+                ], width=12, lg=6, className="mb-4"),
+            ])
+        ], className="anomaly-analysis mb-4"),
         
+        html.H4(f"{title_prefix} Health Activity", className="mb-3"),
         # Historical charts
         dbc.Row([
             # Heart rate history

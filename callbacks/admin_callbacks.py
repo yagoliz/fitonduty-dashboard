@@ -5,18 +5,20 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from utils.database import (
-    get_participants_by_group,
-    get_all_groups,
-    load_participant_data,
-    import_mock_data,
-    get_user_by_id,
-)
-
 from components.admin.group_comparison import create_group_comparison
 from components.admin.group_summary import create_group_summary
 from components.admin.participant_detail import create_participant_detail
 
+from utils.database import (
+    get_participants_by_group,
+    get_all_groups,
+    load_participant_data,
+    load_anomaly_data,
+    import_mock_data,
+    get_user_by_id,
+)
+
+from utils.visualization import create_empty_chart, create_anomaly_timeline, create_anomaly_heatmap
 
 @callback(
     [Output("sidebar-column", "className"),
@@ -516,3 +518,103 @@ def generate_mock_data_callback(n_clicks, group_id, start_date, end_date, overwr
     except Exception as e:
         print(f"Error generating mock data: {e}")
         return html.Div(f"Error: {str(e)}", style={"color": "red"})
+
+
+@callback(
+    [Output("admin-anomaly-summary", "children"), Output("admin-anomaly-timeline-chart", "figure")],
+    [Input("selected-participant-store", "data"), Input("admin-date-range", "data")],
+)
+def update_admin_anomaly_timeline(participant_id, date_range):
+    """Update admin anomaly timeline chart for selected participant"""
+    if not participant_id or not date_range:
+        empty_fig = create_empty_chart("No participant or date range selected")
+        return html.Div("No data available"), empty_fig
+
+    print(f"TIMELINE CALLBACK TRIGGERED - participant_id: {participant_id}, date_range: {date_range}")
+
+    # Extract date info
+    start_date = date_range.get("start_date")
+    end_date = date_range.get("end_date")
+    
+    if not start_date or not end_date:
+        empty_fig = create_empty_chart("Invalid date range")
+        return html.Div("No data available"), empty_fig
+
+    try:
+        # If both dates are the same, show a single day view
+        if start_date == end_date:
+            date_to_use = start_date
+            df = load_anomaly_data(participant_id, date=date_to_use)
+        else:
+            # Looking at multiple days, for timeline show just the last day
+            df = load_anomaly_data(participant_id, date=end_date)
+        
+        if df.empty:
+            empty_fig = create_empty_chart("No anomaly data available for the selected date")
+            return html.Div("No anomaly data available"), empty_fig
+
+        print(f"DataFrame has {len(df)} rows")
+
+        # Calculate summary statistics
+        avg_score = df['score'].mean()
+        max_score = df['score'].max()
+        anomalies = (df['score'] > 0.8).sum()
+
+        # Create summary card
+        summary = html.Div([
+            dbc.Row([
+                dbc.Col([
+                    html.H3(f"{avg_score:.3f}", className="text-primary text-center"),
+                    html.P("Avg Anomaly Score", className="text-muted text-center small"),
+                ], width=4),
+                dbc.Col([
+                    html.H3(f"{max_score:.3f}", className="text-danger text-center"),
+                    html.P("Max Anomaly Score", className="text-muted text-center small"),
+                ], width=4),
+                dbc.Col([
+                    html.H3(f"{anomalies}", className="text-warning text-center"),
+                    html.P("Potential Anomalies", className="text-muted text-center small"),
+                ], width=4),
+            ])
+        ])
+
+        # Create timeline chart
+        fig = create_anomaly_timeline(df)
+
+        return summary, fig
+    except Exception as e:
+        # Return empty states in case of error
+        empty_fig = create_empty_chart(f"Error loading anomaly data: {str(e)}")
+        return html.Div(f"Error: {str(e)}"), empty_fig
+
+
+@callback(
+    Output("admin-anomaly-heatmap-chart", "figure"),
+    [Input("selected-participant-store", "data"), Input("admin-date-range", "data")],
+)
+def update_admin_anomaly_heatmap(participant_id, date_range):
+    """Update admin anomaly heatmap chart for selected participant"""
+    if not participant_id or not date_range:
+        return create_empty_chart("No participant or date range selected")
+
+    # Extract date info
+    start_date = date_range.get("start_date")
+    end_date = date_range.get("end_date")
+    
+    if not start_date or not end_date:
+        return create_empty_chart("Invalid date range")
+
+    try:
+        # Load data for date range
+        df = load_anomaly_data(participant_id, start_date=start_date, end_date=end_date)
+        
+        if df.empty:
+            return create_empty_chart("No anomaly data available for the selected date range")
+
+        # Create heatmap
+        fig = create_anomaly_heatmap(df)
+
+        return fig
+    except Exception as e:
+        # Return empty chart in case of error
+        return create_empty_chart(f"Error loading anomaly data: {str(e)}")
