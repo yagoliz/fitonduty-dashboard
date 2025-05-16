@@ -7,8 +7,8 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from components.participant.participant_ranking import create_participant_ranking_layout
-from utils.database import load_participant_data, get_participant_ranking
-from utils.visualization import create_empty_chart, create_heart_rate_zones_chart
+from utils.database import load_participant_data, get_participant_ranking, load_anomaly_data
+from utils.visualization import create_empty_chart, create_heart_rate_zones_chart, create_anomaly_timeline, create_anomaly_heatmap
 
 
 @callback(
@@ -666,3 +666,89 @@ def update_participant_ranking(start_date, end_date):
     except Exception as e:
         # Return error message in case of exception
         return dbc.Alert(f"Error loading ranking data: {str(e)}", color="danger")
+    
+
+@callback(
+    [Output("anomaly-summary", "children"), Output("anomaly-timeline-chart", "figure")],
+    [Input("participant-start-date", "date"), Input("participant-end-date", "date")]
+)
+def update_anomaly_timeline(start_date, end_date):
+    """Update anomaly timeline chart"""
+    # Check if user is authenticated
+    if not current_user.is_authenticated:
+        raise PreventUpdate
+
+    user_id = current_user.id
+
+    try:
+        # If both dates are the same or only one date is specified, show a single day view
+        if start_date == end_date or not end_date:
+            date_to_use = start_date if start_date else None
+            df = load_anomaly_data(user_id, date=date_to_use)
+        else:
+            # Looking at multiple days, for timeline show just the last day
+            df = load_anomaly_data(user_id, date=end_date)
+        
+        if df.empty:
+            empty_fig = create_empty_chart("No anomaly data available for the selected date")
+            return html.Div("No anomaly data available"), empty_fig
+
+        # Calculate summary statistics
+        avg_score = df['score'].mean()
+        max_score = df['score'].max()
+        anomalies = (df['score'] > 0.8).sum()
+
+        # Create summary card
+        summary = html.Div([
+            dbc.Row([
+                dbc.Col([
+                    html.H3(f"{avg_score:.3f}", className="text-primary text-center"),
+                    html.P("Avg Anomaly Score", className="text-muted text-center small"),
+                ], width=4),
+                dbc.Col([
+                    html.H3(f"{max_score:.3f}", className="text-danger text-center"),
+                    html.P("Max Anomaly Score", className="text-muted text-center small"),
+                ], width=4),
+                dbc.Col([
+                    html.H3(f"{anomalies}", className="text-warning text-center"),
+                    html.P("Potential Anomalies", className="text-muted text-center small"),
+                ], width=4),
+            ])
+        ])
+
+        # Create timeline chart
+        fig = create_anomaly_timeline(df)
+
+        return summary, fig
+    except Exception as e:
+        # Return empty states in case of error
+        empty_fig = create_empty_chart(f"Error loading anomaly data: {str(e)}")
+        return html.Div("No anomaly data available"), empty_fig
+
+
+@callback(
+    Output("anomaly-heatmap-chart", "figure"),
+    [Input("participant-start-date", "date"), Input("participant-end-date", "date")]
+)
+def update_anomaly_heatmap(start_date, end_date):
+    """Update anomaly heatmap chart"""
+    # Check if user is authenticated
+    if not current_user.is_authenticated:
+        raise PreventUpdate
+
+    user_id = current_user.id
+
+    try:
+        # Load data for date range
+        df = load_anomaly_data(user_id, start_date=start_date, end_date=end_date)
+        
+        if df.empty:
+            return create_empty_chart("No anomaly data available for the selected date range")
+
+        # Create heatmap
+        fig = create_anomaly_heatmap(df)
+
+        return fig
+    except Exception as e:
+        # Return empty chart in case of error
+        return create_empty_chart(f"Error loading anomaly data: {str(e)}")

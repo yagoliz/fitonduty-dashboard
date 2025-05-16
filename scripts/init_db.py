@@ -11,6 +11,9 @@ Options:
     --seed         Seed the database with sample data
     --config       Path to configuration file (default: config/db_seed.yaml)
     --db-url       Database connection URL (overrides config file and environment variables)
+    --set-permissions  Set user permissions (in case setup_database.sh is not run)
+    --anomaly-interval  Interval in minutes for anomaly data (default: 5)
+    --skip-anomalies  Skip generating anomaly data
 """
 import os
 import sys
@@ -31,6 +34,8 @@ def parse_args():
     parser.add_argument('--config', default='config/db_seed.yaml', help='Path to configuration file')
     parser.add_argument('--db-url', help='Database connection URL (overrides config file)')
     parser.add_argument('--set-permissions', action='store_true', help='Set user permissions (in case setup_database.sh is not run)')
+    parser.add_argument('--anomaly-interval', type=int, default=5, help='Interval in minutes for anomaly data (default: 5)')
+    parser.add_argument('--skip-anomalies', action='store_true', help='Skip generating anomaly data')
     return parser.parse_args()
 
 def load_config(config_path):
@@ -199,6 +204,20 @@ def create_tables(engine):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """,
+
+        # Anomaly Detection Table
+        """
+        CREATE TABLE IF NOT EXISTS anomaly_scores (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            date DATE NOT NULL,
+            time_slot INTEGER NOT NULL, -- Minutes from midnight (0-1439)
+            score NUMERIC(7,4) NOT NULL, 
+            label VARCHAR(50), -- Optional classification label
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (user_id, date, time_slot)
+        )
+        """,
         
         # Create indexes for performance
         """
@@ -211,6 +230,14 @@ def create_tables(engine):
         
         """
         CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(session_token)
+        """,
+
+        """
+        CREATE INDEX IF NOT EXISTS idx_anomaly_user_date ON anomaly_scores(user_id, date)
+        """,
+
+        """
+        CREATE INDEX IF NOT EXISTS idx_anomaly_date_range ON anomaly_scores(date)
         """
     ]
     
@@ -442,6 +469,90 @@ def import_mock_data(engine, user_id, start_date, end_date, overwrite=False):
     print(f"Successfully generated {success_count} days of health data for user {user_id}")
     return success_count > 0
 
+def generate_mock_anomaly_data(user_id, start_date, end_date, interval_minutes=5):
+    """
+    Generate mock anomaly score data for a user
+    
+    Args:
+        user_id: User ID
+        start_date: Start date
+        end_date: End date
+        interval_minutes: Time interval between measurements (default: 5 minutes)
+        
+    Returns:
+        List of dictionaries with anomaly data
+    """
+    if isinstance(start_date, str):
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    if isinstance(end_date, str):
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    # Calculate number of days and time slots per day
+    delta = end_date - start_date
+    days = delta.days + 1
+    slots_per_day = 24 * 60 // interval_minutes
+    
+    # Create date range
+    date_range = [start_date + timedelta(days=i) for i in range(days)]
+    
+    # Seed random number generator based on user_id for consistency
+    random.seed(hash(str(user_id)) % 2**32)
+    
+    # Generate base parameters for this user
+    # Some users will have more anomalies than others
+    base_anomaly_level = random.uniform(0.1, 0.3)
+    variability = random.uniform(0.05, 0.15)
+    
+    # Create patterns for different times of day
+    morning_factor = random.uniform(0.8, 1.2)
+    afternoon_factor = random.uniform(0.8, 1.2)
+    evening_factor = random.uniform(0.8, 1.2)
+    night_factor = random.uniform(0.8, 1.2)
+    
+    # Occasionally add anomaly spikes
+    anomaly_days = random.sample(date_range, k=min(3, len(date_range)))
+    anomaly_times = [random.randint(0, slots_per_day-1) for _ in range(len(anomaly_days))]
+    
+    # Generate data
+    anomaly_data = []
+    
+    for date in date_range:
+        for slot in range(0, slots_per_day):
+            time_minutes = slot * interval_minutes
+            hour = time_minutes // 60
+            
+            # Base score varies by time of day
+            if 6 <= hour < 12:  # Morning
+                time_factor = morning_factor
+            elif 12 <= hour < 18:  # Afternoon
+                time_factor = afternoon_factor
+            elif 18 <= hour < 22:  # Evening
+                time_factor = evening_factor
+            else:  # Night
+                time_factor = night_factor
+                
+            # Calculate base score with some noise
+            base_score = base_anomaly_level * time_factor
+            noise = random.normalvariate(0, variability)
+            score = max(0, min(1, base_score + noise))
+            
+            # Add occasional anomaly spikes
+            if date in anomaly_days and slot == anomaly_times[anomaly_days.index(date)]:
+                score = min(1.0, score + random.uniform(0.3, 0.7))
+                label = random.choice(["Activity spike", "Sleep disruption", "Stress event", None])
+            else:
+                label = None
+            
+            anomaly_data.append({
+                "date": date,
+                "time_slot": time_minutes,
+                "score": round(score, 4),
+                "label": label
+            })
+    
+    return anomaly_data
+
+
 def save_health_metrics(engine, user_id, date, metrics):
     """
     Save health metrics for a user
@@ -546,6 +657,62 @@ def save_health_metrics(engine, user_id, date, metrics):
     except Exception as e:
         print(f"Error saving health metrics for user {user_id} on {date}: {e}")
         return False
+    
+
+def save_anomaly_scores(engine, user_id, anomaly_data):
+    """
+    Save anomaly scores to the database
+    
+    Args:
+        engine: SQLAlchemy engine
+        user_id: User ID
+        anomaly_data: List of dictionaries with anomaly data
+        
+    Returns:
+        Number of records inserted
+    """
+    if not anomaly_data:
+        return 0
+    
+    # Prepare batch insert query
+    query = text("""
+        INSERT INTO anomaly_scores (user_id, date, time_slot, score, label)
+        VALUES (:user_id, :date, :time_slot, :score, :label)
+        ON CONFLICT (user_id, date, time_slot) DO UPDATE SET
+        score = EXCLUDED.score,
+        label = EXCLUDED.label
+    """)
+    
+    try:
+        count = 0
+        with engine.begin() as conn:
+            # Process in batches for better performance
+            batch_size = 1000
+            for i in range(0, len(anomaly_data), batch_size):
+                batch = anomaly_data[i:i+batch_size]
+                
+                # Prepare parameters for this batch
+                params = []
+                for item in batch:
+                    params.append({
+                        "user_id": user_id,
+                        "date": item["date"],
+                        "time_slot": item["time_slot"],
+                        "score": item["score"],
+                        "label": item["label"]
+                    })
+                
+                # Execute batch insert
+                conn.execute(query, params)
+                count += len(batch)
+                
+                print(f"Inserted batch of {len(batch)} anomaly records for user {user_id}")
+        
+        return count
+    except Exception as e:
+        print(f"Error saving anomaly scores: {e}")
+        return 0
+    
 
 def seed_database(engine, config):
     """Seed the database with data from configuration file"""
@@ -691,8 +858,22 @@ def seed_database(engine, config):
                     success = import_mock_data(engine, participant_id, start_date, today)
                     if not success:
                         print(f"  - Failed to generate health data for {participant['username']}")
+                        
+                    # Generate anomaly scores
+                    print(f"Generating anomaly scores for {participant['username']}...")
+                    anomaly_data = generate_mock_anomaly_data(
+                        participant_id, 
+                        start_date, 
+                        today,
+                        interval_minutes=5  # Generate data every 5 minutes
+                    )
+                    if anomaly_data:
+                        count = save_anomaly_scores(engine, participant_id, anomaly_data)
+                        print(f"  - Generated {count} anomaly records")
+                    else:
+                        print(f"  - Failed to generate anomaly data for {participant['username']}")
             except Exception as e:
-                print(f"Error generating health data for {participant.get('username', 'unknown')}: {e}")
+                print(f"Error generating data for {participant.get('username', 'unknown')}: {e}")
                 
         print("\nDatabase seeded successfully!")
     except Exception as e:
@@ -753,7 +934,22 @@ def main():
                 sys.exit(1)
                 
             try:
+                # If skipping anomalies is requested, patch the generate_mock_anomaly_data function
+                if args.skip_anomalies:
+                    print("Skipping anomaly data generation as requested")
+                    global generate_mock_anomaly_data
+                    old_func = generate_mock_anomaly_data
+                    def generate_mock_anomaly_data(*args, **kwargs):
+                        return []
+                
+                # Pass the anomaly interval parameter to the seed function
+                config['anomaly_interval'] = args.anomaly_interval
+                
                 seed_database(engine, config)
+                
+                # Restore the original function if we patched it
+                if args.skip_anomalies:
+                    generate_mock_anomaly_data = old_func
             except Exception as e:
                 print(f"Error seeding database: {e}")
                 sys.exit(1)

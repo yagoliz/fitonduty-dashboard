@@ -482,3 +482,75 @@ def get_participant_ranking(user_id, start_date, end_date):
     except Exception as e:
         print(f"Error getting participant ranking: {e}")
         return None
+    
+
+def load_anomaly_data(user_id, date=None, start_date=None, end_date=None):
+    """
+    Load anomaly score data for a participant
+    
+    Args:
+        user_id: User ID
+        date: Specific date to load (optional)
+        start_date: Start date for range (optional)
+        end_date: End date for range (optional)
+        
+    Returns:
+        Pandas DataFrame with anomaly data
+    """
+    if date:
+        # Single day query
+        query = text("""
+            SELECT date, time_slot, score, label
+            FROM anomaly_scores
+            WHERE user_id = :user_id AND date = :date
+            ORDER BY time_slot
+        """)
+        params = {"user_id": user_id, "date": date}
+    elif start_date and end_date:
+        # Date range query
+        query = text("""
+            SELECT date, time_slot, score, label
+            FROM anomaly_scores
+            WHERE user_id = :user_id 
+            AND date BETWEEN :start_date AND :end_date
+            ORDER BY date, time_slot
+        """)
+        params = {"user_id": user_id, "start_date": start_date, "end_date": end_date}
+    else:
+        # Default to latest date
+        query = text("""
+            SELECT date, time_slot, score, label
+            FROM anomaly_scores
+            WHERE user_id = :user_id 
+            AND date = (
+                SELECT MAX(date) FROM anomaly_scores 
+                WHERE user_id = :user_id
+            )
+            ORDER BY time_slot
+        """)
+        params = {"user_id": user_id}
+    
+    try:
+        with engine.connect() as conn:
+            df = pd.read_sql(query, conn, params=params)
+            
+            # Add calculated time column (for easier plotting)
+            if not df.empty:
+                # Convert time_slot (minutes) to time string
+                df['time'] = df['time_slot'].apply(
+                    lambda x: f"{x // 60:02d}:{x % 60:02d}"
+                )
+                
+                # Create datetime column for plotting
+                df['datetime'] = df.apply(
+                    lambda row: pd.Timestamp(
+                        row['date'].year, row['date'].month, row['date'].day, 
+                        row['time_slot'] // 60, row['time_slot'] % 60
+                    ), 
+                    axis=1
+                )
+            
+            return df
+    except Exception as e:
+        print(f"Error loading anomaly data: {e}")
+        return pd.DataFrame()

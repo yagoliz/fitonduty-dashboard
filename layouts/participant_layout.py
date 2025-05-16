@@ -6,6 +6,7 @@ from flask_login import current_user
 import pandas as pd
 
 # Import components
+from components.participant.anomaly_charts import create_anomaly_charts
 from components.participant.date_selector import create_date_selector
 from components.participant.health_metrics import create_health_metrics
 from components.participant.detailed_charts import create_detailed_charts
@@ -79,6 +80,9 @@ def create_layout():
                     html.Div(id="participant-ranking-container"),
                 ], xs=12, md=7, lg=8, className="mb-4")
             ], className="mb-3"),
+
+            # Anomaly charts component
+            create_anomaly_charts(),
             
             # Health metrics section
             create_health_metrics(),
