@@ -462,7 +462,7 @@ def create_anomaly_heatmap(df_week):
         ),
         margin=dict(l=5, r=5, t=40, b=40),
         autosize=True,
-        height=350,
+        height=None,
         template="plotly_white"
     )
     
