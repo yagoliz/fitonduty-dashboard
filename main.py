@@ -1,8 +1,8 @@
 from app import app
-import index
+import index # noqa: F401
 
 # Import callbacks
-from callbacks import admin_callbacks, participant_callbacks
+from callbacks import admin_callbacks, participant_callbacks # noqa: F401
 
 
 # Start the server
