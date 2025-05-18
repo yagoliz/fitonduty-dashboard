@@ -1,0 +1,104 @@
+/* Mobile fixes for admin sidebar */
+@media (max-width: 767.98px) {
+    /* Sidebar behavior on mobile */
+    .sidebar-column {
+        transform: translateX(-100%);
+        width: 85%; /* Cover most of the screen */
+        max-width: 300px;
+        z-index: 1050; /* Above most content */
+        transition: transform 0.3s ease;
+    }
+    
+    /* When active, show the sidebar */
+    .sidebar-column.sidebar-mobile-open {
+        transform: translateX(0);
+    }
+    
+    /* Add overlay when sidebar is open */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1040; /* Below sidebar but above other content */
+        display: none;
+    }
+    
+    /* Show overlay when sidebar is open */
+    .sidebar-overlay.active {
+        display: block;
+    }
+    
+    /* Close button for mobile sidebar */
+    .sidebar-close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        font-size: 20px;
+        background-color: transparent;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+    }
+    
+    .sidebar-close-btn:hover {
+        color: #0077b6;
+    }
+    
+    /* Ensure content takes full width when sidebar is hidden on mobile */
+    .main-content-column {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    /* Make sure navbar doesn't create a gap */
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+    }
+}
+
+/* Mobile navbar improvements for participant layout */
+@media (max-width: 767.98px) {
+    .navbar .navbar-collapse {
+        background-color: #0a2342;
+        padding: 10px;
+        border-radius: 0 0 5px 5px;
+    }
+    
+    .navbar .navbar-toggler {
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .navbar .navbar-toggler:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+    }
+}
+
+.navbar-collapse {
+    transition: height 0.3s ease;
+}
+
+.navbar-collapse.collapsing {
+    overflow: hidden;
+    transition: height 0.3s ease;
+}
+
+.navbar-collapse.show {
+    transition: height 0.3s ease;
+}
+
+/* Ensure smoother animations for all transitions */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure footer stays at bottom even on mobile */
+footer {
+    margin-top: auto;
+}

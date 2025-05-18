@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 from flask_login import current_user
 import pandas as pd
@@ -41,7 +41,8 @@ def create_layout():
                     href="/",
                     style={"textDecoration": "none"},
                 ),
-                dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+                # Add aria-label to the toggler button for accessibility
+                dbc.NavbarToggler(id="navbar-toggler", n_clicks=0,),
                 dbc.Collapse(
                     dbc.Nav([
                         dbc.NavItem(dbc.Button("Logout", id="logout-button", className="btn-logout")),
@@ -50,10 +51,13 @@ def create_layout():
                     navbar=True),
                     id="navbar-collapse",
                     navbar=True,
+                    is_open=False,  # Start closed on mobile
                 ),
             ]),
             color="#0a2342",
             className="mb-4",
+            dark=True,  # Important for proper contrast
+            expand="md",  # Collapse below medium breakpoint
         ),
         
         # Main content container
@@ -94,3 +98,15 @@ def create_layout():
             create_footer()
         ], className="px-3 px-md-4")
     ])
+
+
+@callback(
+    Output("navbar-collapse", "is_open"),
+    [Input("navbar-toggler", "n_clicks")],
+    [State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n_clicks, is_open):
+    """Toggle the navbar collapse on mobile"""
+    if n_clicks:
+        return not is_open
+    return is_open
