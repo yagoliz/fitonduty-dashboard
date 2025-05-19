@@ -47,7 +47,10 @@ layout = dbc.Container(
                     )
                 ),
                 width={"size": 6, "offset": 3},
-                md={"size": 4, "offset": 4},
+                xs={"size": 12, "offset": 0},  # Full width on extra small screens
+                sm={"size": 10, "offset": 1},  # 10/12 width on small screens
+                md={"size": 6, "offset": 3},   # 6/12 width on medium screens
+                lg={"size": 4, "offset": 4},   # 4/12 width on large screens
             )
         )
     ],
