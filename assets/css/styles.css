@@ -556,28 +556,3 @@ footer {
     margin-bottom: 30px;
     font-weight: 500;
 }
-
-
-/* Mobile adjustments */
-@media (max-width: 768px) {
-    .sidebar-column {
-        transform: translateX(calc(-1 * var(--sidebar-width)));
-    }
-
-    .sidebar-toggle-container {
-        left: 0;
-    }
-
-    .sidebar-column.sidebar-mobile-open {
-        transform: translateX(0);
-    }
-
-    .sidebar-mobile-open~.sidebar-toggle-container {
-        left: var(--sidebar-width);
-    }
-
-    .main-content-column {
-        margin-left: 0;
-        width: 100%;
-    }
-}

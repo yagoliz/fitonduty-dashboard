@@ -1,20 +1,77 @@
-/* Mobile fixes for admin sidebar */
+/* Mobile behavior for sidebar */
 @media (max-width: 767.98px) {
+    /* Define sidebar width variables for consistency */
+    :root {
+        --sidebar-mobile-width: 55vw; /* Use viewport width for reliability */
+        --sidebar-max-width: 700px;
+        --toggle-width: 38px;
+    }
+    
     /* Sidebar behavior on mobile */
     .sidebar-column {
         transform: translateX(-100%);
-        width: 85%; /* Cover most of the screen */
-        max-width: 300px;
+        width: var(--sidebar-mobile-width);
+        max-width: var(--sidebar-max-width);
         z-index: 1050; /* Above most content */
         transition: transform 0.3s ease;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        overflow-y: auto;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        background-color: white; /* Ensure background is solid */
     }
     
-    /* When active, show the sidebar */
+    /* Ensure accurate sidebar width measurement */
     .sidebar-column.sidebar-mobile-open {
-        transform: translateX(0);
+        width: var(--sidebar-mobile-width) !important;
+        max-width: var(--sidebar-max-width) !important;
     }
     
-    /* Add overlay when sidebar is open */
+    /* Always keep sidebar in collapsed state for mobile (our JS will handle sidebar-mobile-open separately) */
+    .sidebar-collapsed {
+        transform: translateX(-100%);
+    }
+    
+    /* When mobile-open class is added, show the sidebar independent of collapse state */
+    .sidebar-mobile-open {
+        transform: translateX(0) !important;
+    }
+    
+    /* FIXED: Toggle button container positioning exactly at the edge */
+    .sidebar-toggle-container {
+        position: fixed;
+        left: 0; /* Start at left edge when sidebar is closed */
+        top: 15px; 
+        z-index: 1045; /* Above overlay but below sidebar */
+        transition: left 0.3s ease;
+    }
+    
+    /* FIXED: When sidebar is open, position toggle EXACTLY at edge of sidebar */
+    .sidebar-mobile-open ~ .sidebar-toggle-container {
+        left: calc(var(--sidebar-mobile-width) - var(--toggle-width)) !important;
+        /* Fallback for browsers that don't support calc */
+        left: calc(55vw - 38px) !important;
+    }
+    
+    /* Toggle button styling */
+    .sidebar-toggle-btn {
+        width: var(--toggle-width);
+        height: var(--toggle-width);
+        background-color: white;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        border-radius: 0 4px 4px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #333;
+        position: relative; /* Enable positioning of pseudo-elements */
+    }
+    
+    /* Overlay background when sidebar is open */
     .sidebar-overlay {
         position: fixed;
         top: 0;
@@ -22,46 +79,116 @@
         right: 0;
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1040; /* Below sidebar but above other content */
+        z-index: 1040; /* Below sidebar but above content */
         display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
-    /* Show overlay when sidebar is open */
+    /* Show overlay when active */
     .sidebar-overlay.active {
         display: block;
+        opacity: 1;
     }
     
     /* Close button for mobile sidebar */
     .sidebar-close-btn {
         position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 30px;
-        height: 30px;
-        font-size: 20px;
-        background-color: transparent;
+        top: 15px;
+        right: 15px;
+        width: 36px;
+        height: 36px;
+        font-size: 28px;
+        background-color: rgba(240, 240, 240, 0.5);
         border: none;
-        color: #6c757d;
+        color: #333;
         cursor: pointer;
+        z-index: 1060;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        line-height: 1;
     }
     
     .sidebar-close-btn:hover {
         color: #0077b6;
+        background-color: rgba(240, 240, 240, 0.8);
     }
     
-    /* Ensure content takes full width when sidebar is hidden on mobile */
+    /* Add a small red indicator to make toggle more visible */
+    .sidebar-toggle-btn::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 24px;
+        width: 3px;
+        border-radius: 2px 0 0 2px;
+    }
+    
+    /* Content fills the screen on mobile */
     .main-content-column {
-        margin-left: 0;
-        width: 100%;
+        margin-left: 0 !important;
+        width: 100% !important;
     }
     
-    /* Make sure navbar doesn't create a gap */
-    .sticky-top {
-        position: sticky;
-        top: 0;
-        z-index: 1030;
+    /* Add additional padding to ensure toggle doesn't overlap content */
+    .main-content-container {
+        padding-top: 20px;
+    }
+    
+    /* LOGOUT BUTTON FIX - Make sure the logout button is visible on mobile */
+    #logout-button, 
+    button#logout-button,
+    .sidebar-content #logout-button {
+        display: block !important;
+        width: 100%;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Add some extra space at the bottom of sidebar for the logout button */
+    .sidebar-content {
+        padding-bottom: 30px; /* Ensure enough space for the button */
+    }
+    
+    /* Enhance logout button visibility */
+    .sidebar-content #logout-button,
+    #logout-button, 
+    button#logout-button {
+        background-color: #DA291C; /* Your app's red color */
+        color: white;
+        border: none;
+        font-weight: 500;
+        padding: 10px 15px;
+        border-radius: 4px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar-content #logout-button:hover,
+    #logout-button:hover {
+        background-color: #b32218; /* Darker shade for hover */
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Add an icon before the text */
+    .sidebar-content #logout-button::before,
+    #logout-button::before {
+        content: "↪"; /* Simple exit arrow */
+        margin-right: 8px;
+        font-weight: bold;
+    }
+  
+    /* Remove the d-md-block d-none classes effect */
+    .d-md-block.d-none {
+        display: block !important;
     }
 }
+
 
 /* Mobile navbar improvements for participant layout */
 @media (max-width: 767.98px) {
