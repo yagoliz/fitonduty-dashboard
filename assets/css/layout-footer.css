@@ -1,0 +1,30 @@
+/* Footer Layout Styles */
+
+/* Improved footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    background-color: white;
+}
+
+/* Ensure footer stays at bottom even on mobile */
+footer {
+    margin-top: auto;
+}
+
+/* Progress indicators */
+.trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.trend-up::before {
+    content: "↑";
+    margin-right: 4px;
+}
+
+.trend-down::before {
+    content: "↓";
+    margin-right: 4px;
+}

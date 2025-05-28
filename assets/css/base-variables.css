@@ -1,0 +1,47 @@
+/* Base Variables & Color Palette */
+:root {
+    /* Wellness-focused color palette */
+    --primary: #0077b6;        /* Ocean blue - primary brand color */
+    --secondary: #023e8a;      /* Deep blue - secondary elements */
+    --success: #38b000;        /* Green - positive indicators */
+    --info: #90e0ef;          /* Light cyan - informational elements */
+    --warning: #fb8500;        /* Orange - warning indicators */
+    --danger: #d00000;         /* Red - alerts/dangers */
+    --light: #f8f9fa;         /* Light background */
+    --dark: #1d3557;          /* Dark blue-gray for text */
+    --gray-bg: #f0f5f9;       /* Light blue-gray for card backgrounds */
+    
+    /* Layout dimensions */
+    --sidebar-width: 450px;
+    --toggle-width: 45px;
+    
+    /* Mobile sidebar dimensions */
+    --sidebar-mobile-width: 55vw;
+    --sidebar-max-width: 700px;
+    
+    /* Spacing and sizing */
+    --border-radius: 8px;
+    --border-radius-sm: 4px;
+    --border-radius-lg: 12px;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.1);
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* Global transition timing */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Apply color palette to Bootstrap components */
+.bg-primary { background-color: var(--primary) !important; }
+.text-primary { color: var(--primary) !important; }
+.text-success { color: var(--success) !important; }
+.text-danger { color: var(--danger) !important; }
+.text-info { color: var(--info) !important; }
+.text-warning { color: var(--warning) !important; }

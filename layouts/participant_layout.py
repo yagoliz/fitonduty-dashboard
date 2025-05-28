@@ -1,29 +1,30 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from dash import html, dcc, callback, Input, Output, State
+from dash import html, dcc, callback, callback_context, Input, Output, State
 import dash_bootstrap_components as dbc
 from flask_login import current_user
-import pandas as pd
 
 # Import components
-from components.participant.date_selector import create_date_selector
-from components.participant.health_metrics import create_health_metrics
-from components.participant.detailed_charts import create_detailed_charts
 from layouts.footer import create_footer
 
 def create_layout():
     """
-    Create the layout for the participant dashboard
+    Create the layout for the participant dashboard with 3 distinct sections:
+    1. Ranking (whole dataset)
+    2. Daily Snapshot (single day picker)
+    3. Health Metrics (single day + n days prior)
     
     Returns:
         A dash component with the participant dashboard
     """
     # Get the current participant's information
-    user_id = current_user.id if current_user.is_authenticated else None
     display_name = current_user.display_name if current_user.is_authenticated else "Not logged in"
     
     # Get group information
     group = current_user.group if current_user.is_authenticated else None
+    
+    # Set default dates
+    today = datetime(2025, 5, 1).date()
     
     return html.Div([
         # Navigation bar - outside the container for full width
@@ -40,7 +41,6 @@ def create_layout():
                     href="/",
                     style={"textDecoration": "none"},
                 ),
-                # Add aria-label to the toggler button for accessibility
                 dbc.NavbarToggler(id="navbar-toggler", n_clicks=0,),
                 dbc.Collapse(
                     dbc.Nav([
@@ -50,13 +50,13 @@ def create_layout():
                     navbar=True),
                     id="navbar-collapse",
                     navbar=True,
-                    is_open=False,  # Start closed on mobile
+                    is_open=False,
                 ),
             ]),
             color="#0a2342",
             className="mb-4",
-            dark=True,  # Important for proper contrast
-            expand="md",  # Collapse below medium breakpoint
+            dark=True,
+            expand="md",
         ),
         
         # Main content container
@@ -71,24 +71,79 @@ def create_layout():
                 ])
             ], className="mb-4"),
             
-            # Date selector component and health summary
-            dbc.Row([
-                dbc.Col([
-                    html.H5("Dates of Interest", className="section-title"),
-                    create_date_selector()
-                ], xs=12, md=5, lg=4, className="mb-4"),
-                dbc.Col([
-                    html.H5("Your Health Summary", className="section-title"),
-                    html.Div(id="participant-details-container", className="mb-3"),
-                    html.Div(id="participant-ranking-container"),
-                ], xs=12, md=7, lg=8, className="mb-4")
-            ], className="mb-3"),
+            # SECTION 1: RANKING (Whole dataset)
+            html.Div([
+                html.H4("Your Data Consistency Ranking", className="section-title text-primary"),
+                html.P("Your ranking is calculated across your entire data history", className="text-muted mb-3"),
+                html.Div(id="participant-ranking-container"),
+            ], className="mb-5"),
             
-            # Health metrics section
-            create_health_metrics(),
+            # SECTION 2: DAILY SNAPSHOT (Single day)
+            html.Div([
+                html.H4("Daily Health Snapshot", className="section-title text-primary"),
+                dbc.Row([
+                    dbc.Col([
+                        html.H6("Select Date", className="mb-2"),
+                        dcc.DatePickerSingle(
+                            id="snapshot-date-picker",
+                            date=today,
+                            display_format="YYYY-MM-DD",
+                            className="date-input mb-3",
+                        ),
+                        html.P("View your health metrics for a specific day", className="text-muted small"),
+                    ], xs=12, md=4, className="mb-3"),
+                    dbc.Col([
+                        html.Div(id="daily-snapshot-container"),
+                    ], xs=12, md=8),
+                ]),
+            ], className="mb-5"),
             
-            # Detailed charts component
-            create_detailed_charts(),
+            # SECTION 3: HEALTH METRICS TRENDS (Single day + n days prior)
+            html.Div([
+                html.H4("Health Metrics Trends", className="section-title text-primary"),
+                
+                # Date controls row
+                dbc.Row([
+                    dbc.Col([
+                        html.H6("Select End Date & Period", className="mb-2"),
+                        dcc.DatePickerSingle(
+                            id="trends-end-date-picker",
+                            date=today,
+                            display_format="YYYY-MM-DD",
+                            className="date-input mb-3",
+                        ),
+                        html.Div([
+                            dbc.Button("Last 7 Days", id="trends-btn-7-days", color="light", size="sm", className="date-button me-1"),
+                            dbc.Button("Last 30 Days", id="trends-btn-30-days", color="light", size="sm", className="date-button me-1"),
+                            dbc.Button("Last 90 Days", id="trends-btn-90-days", color="light", size="sm", className="date-button"),
+                        ], className="date-button-group mb-3"),
+                        html.P("View trends leading up to your selected date", className="text-muted small"),
+                        
+                        # Store for the calculated start date
+                        dcc.Store(id="trends-date-range", data={
+                            "end_date": today.isoformat(),
+                            "days_back": 7
+                        })
+                    ], xs=12, md=6, lg=4, className="mb-3"),
+                    dbc.Col([
+                        html.Div(id="trends-period-info", className="mb-3"),
+                    ], xs=12, md=6, lg=8),
+                ]),
+                
+                # Charts row (full width)
+                dbc.Row([
+                    dbc.Col([
+                        html.Div(id="health-metrics-container"),
+                    ], xs=12),
+                ]),
+            ], className="mb-5"),
+            
+            # SECTION 4: DETAILED ANALYSIS (Uses same date range as health metrics)
+            html.Div([
+                html.H4("Detailed Analysis", className="section-title text-primary"),
+                html.P("Advanced charts based on your selected trend period", className="text-muted mb-3"),
+                html.Div(id="detailed-analysis-container"),
+            ], className="mb-5"),
             
             # Footer
             create_footer()
@@ -106,3 +161,58 @@ def toggle_navbar_collapse(n_clicks, is_open):
     if n_clicks:
         return not is_open
     return is_open
+
+
+@callback(
+    [Output("trends-date-range", "data"),
+     Output("trends-period-info", "children")],
+    [Input("trends-btn-7-days", "n_clicks"),
+     Input("trends-btn-30-days", "n_clicks"),
+     Input("trends-btn-90-days", "n_clicks"),
+     Input("trends-end-date-picker", "date")],
+    [State("trends-date-range", "data")],
+    prevent_initial_call=True
+)
+def update_trends_date_range(n_7, n_30, n_90, end_date, current_data):
+    """Update the trends date range based on button clicks or date changes"""
+    
+    ctx = callback_context
+    if not ctx.triggered:
+        return current_data, ""
+    
+    trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    # Convert end_date to date object if it's a string
+    if isinstance(end_date, str):
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+    else:
+        end_date_obj = end_date
+    
+    # Determine days back based on trigger
+    if trigger_id == "trends-btn-7-days":
+        days_back = 7
+    elif trigger_id == "trends-btn-30-days":
+        days_back = 30
+    elif trigger_id == "trends-btn-90-days":
+        days_back = 90
+    elif trigger_id == "trends-end-date-picker":
+        # Date picker changed, keep current days_back
+        days_back = current_data.get("days_back", 7)
+    else:
+        days_back = current_data.get("days_back", 7)
+    
+    # Calculate start date
+    start_date_obj = end_date_obj - timedelta(days=days_back-1)
+    
+    # Create info message
+    info_message = html.Div([
+        html.Strong(f"Viewing: {days_back} days"), 
+        html.Br(),
+        html.Span(f"From {start_date_obj.strftime('%b %d')} to {end_date_obj.strftime('%b %d, %Y')}", className="text-muted small")
+    ])
+    
+    return {
+        "end_date": end_date_obj.isoformat(),
+        "start_date": start_date_obj.isoformat(),
+        "days_back": days_back
+    }, info_message

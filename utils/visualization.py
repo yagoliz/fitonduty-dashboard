@@ -224,7 +224,7 @@ def create_heart_rate_zones_chart(df):
                 showarrow=False,
                 font=dict(size=14)
             )],
-            height=300
+            height=None,
         )
         return fig
     

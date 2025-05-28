@@ -1,0 +1,75 @@
+/* Participant Layout Styles */
+
+/* Section styling */
+.section-title {
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+    color: var(--dark);
+    margin-top: 1.5rem;
+    padding-top: 0.5rem;
+    clear: both;
+}
+
+/* Enhanced participant dashboard section titles */
+.section-title {
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 119, 182, 0.1);
+}
+
+/* Health metrics title spacing */
+#health-metrics-title {
+    margin-top: 2rem;
+    padding-top: 0.5rem;
+}
+
+/* Section spacing */
+.mb-5 {
+    margin-bottom: 3rem !important;
+}
+
+/* Period info styling */
+#trends-period-info {
+    background-color: rgba(0, 119, 182, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid var(--primary);
+}
+
+/* Loading states */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: var(--secondary);
+}
+
+/* Empty state */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: var(--border-radius);
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.25rem;
+    }
+}

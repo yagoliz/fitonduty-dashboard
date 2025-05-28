@@ -1,0 +1,119 @@
+/* Card Components */
+
+/* Base card styling */
+.card {
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition);
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 1rem;
+}
+
+.card-body {
+    padding: 1rem;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Shadow variants */
+.shadow-sm {
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* Special card backgrounds */
+#participant-ranking-container .card {
+    background: linear-gradient(135deg, rgba(0, 119, 182, 0.05) 0%, rgba(144, 224, 239, 0.05) 100%);
+    border: 1px solid rgba(0, 119, 182, 0.1);
+}
+
+#daily-snapshot-container .card {
+    background: linear-gradient(135deg, rgba(56, 176, 0, 0.02) 0%, rgba(76, 175, 80, 0.02) 100%);
+    border: 1px solid rgba(76, 175, 80, 0.1);
+}
+
+/* Metric boxes for daily snapshot */
+.metric-box {
+    padding: 1rem;
+    background-color: rgba(248, 249, 250, 0.8);
+    border-radius: var(--border-radius);
+    text-align: center;
+    height: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all var(--transition-fast);
+}
+
+.metric-box:hover {
+    background-color: rgba(248, 249, 250, 1);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+/* Metric values */
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    line-height: 1;
+}
+
+/* Enhanced metric values for snapshots */
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+/* Health snapshot card */
+.health-snapshot {
+    background-color: var(--gray-bg);
+    border: none;
+}
+
+/* Card arrangements */
+.health-metrics-row,
+.detailed-analysis-row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.health-metrics-row > [class*='col-'],
+.detailed-analysis-row > [class*='col-'] {
+    display: flex;
+    flex-direction: column;
+}
+
+.detailed-analysis .card {
+    min-height: 350px;
+}
+
+/* Responsive card adjustments */
+@media (max-width: 768px) {
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .metric-box {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detailed-analysis .card {
+        min-height: 300px;
+    }
+}

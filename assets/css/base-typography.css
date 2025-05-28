@@ -1,0 +1,63 @@
+/* Base Typography & Global Styles */
+
+/* Base typography */
+body {
+    color: var(--dark);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+}
+
+.display-5 {
+    font-weight: 500;
+}
+
+.lead {
+    font-weight: 400;
+}
+
+/* Text size utilities */
+.extra-small {
+    font-size: 0.7rem;
+}
+
+.small {
+    font-size: 0.875rem;
+}
+
+/* Global container */
+.container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}

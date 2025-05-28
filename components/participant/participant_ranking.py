@@ -56,8 +56,9 @@ def create_participant_ranking_layout(ranking_data):
                 html.Div([
                     html.P([
                         "You've provided data for ",
-                        html.Strong(f"{ranking_data['days_with_data']} of {ranking_data['total_possible_days']} days"),
-                        f" ({ranking_data['consistency_percentage']:.1f}%)"
+                        # html.Strong(f"{ranking_data['days_with_data']} of {ranking_data['total_possible_days']} days"),
+                        html.Strong(f"{ranking_data['days_with_data']} days!"),
+                        # f" ({ranking_data['consistency_percentage']:.1f}%)"
                     ], className="text-center mb-0")
                 ])
             ])

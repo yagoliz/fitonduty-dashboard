@@ -1,0 +1,23 @@
+/* Main CSS Index - Import all stylesheets */
+
+/* Base styles - load first */
+@import url('./base-variables.css');
+@import url('./base-typography.css');
+
+/* Component styles */
+@import url('./components-buttons.css');
+@import url('./components-cards.css');
+@import url('./components-forms.css');
+
+/* Chart-specific styles */
+@import url('./visualization-charts.css');
+@import url('./ranking.css');
+
+/* Layout styles */
+@import url('./layout-navbar.css');
+@import url('./layout-admin-sidebar.css');
+@import url('./layout-participant.css');
+@import url('./layout-footer.css');
+
+/* Mobile responsive styles */
+@import url('./mobile.css');
