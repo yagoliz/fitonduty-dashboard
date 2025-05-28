@@ -1,18 +1,24 @@
-# callbacks/participant_callbacks.py - Clean version for 3-section layout
+from datetime import datetime, timedelta
+
 from dash import callback, Input, Output, html, dcc
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from flask_login import current_user
-import pandas as pd
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import numpy as np
 
-from components.participant.participant_ranking import create_participant_ranking_layout
-from utils.database import load_participant_data, get_participant_ranking, get_all_group_participants_ranking
-from utils.visualization import create_empty_chart, create_heart_rate_zones_chart
-from utils.visualization import create_heart_rate_zones_chart, create_movement_speed_chart
-
+from components.participant.participant_ranking import create_participant_ranking
+from utils.database import (
+    load_participant_data,
+    get_participant_ranking,
+    get_all_group_participants_ranking,
+)
+from utils.visualization import (
+    create_empty_chart,
+    create_heart_rate_zones_chart,
+    create_movement_speed_chart,
+    create_step_count_trend_chart,
+    create_step_count_summary,
+)
 
 # SECTION 1: RANKING - Uses whole dataset
 @callback(
@@ -43,7 +49,7 @@ def update_participant_ranking_whole_dataset(pathname):
         # Get all participants data for the race visualization
         all_participants_data = get_all_group_participants_ranking(user_id, far_past, far_future)
         
-        return create_participant_ranking_layout(ranking_data, all_participants_data)
+        return create_participant_ranking(ranking_data, all_participants_data)
 
     except Exception as e:
         return dbc.Alert(f"Error loading ranking data: {str(e)}", color="danger")
@@ -334,81 +340,6 @@ def update_health_metrics_trends(date_range_data):
 
     except Exception as e:
         return dbc.Alert(f"Error loading health metrics: {str(e)}", color="danger")
-
-
-# SECTION 4: DETAILED ANALYSIS - Uses same date range as health metrics
-@callback(
-    Output("detailed-analysis-container", "children"),
-    Input("trends-date-range", "data")
-)
-def update_detailed_analysis(date_range_data):
-    """Update detailed analysis charts based on selected date range"""
-    if not current_user.is_authenticated or not date_range_data:
-        raise PreventUpdate
-
-    user_id = current_user.id
-    start_date = date_range_data.get("start_date")
-    end_date = date_range_data.get("end_date")
-
-    try:
-        # Load participant data
-        df = load_participant_data(user_id, start_date, end_date)
-
-        if df.empty:
-            return dbc.Alert("No data available for detailed analysis", color="warning")
-
-        return html.Div([
-            dbc.Row([
-                # Heart Rate Zones (larger chart)
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader(html.H5("Heart Rate Zones Distribution", className="card-title mb-0")),
-                        dbc.CardBody([
-                            html.P("Average distribution across your selected period", className="text-muted small mb-3"),
-                            html.Div([
-                                dcc.Graph(
-                                    figure=create_heart_rate_zones_chart(df),
-                                    className="chart-container",
-                                    config={'displayModeBar': False, 'responsive': True},
-                                    style={'width': '100%', 'height': '100%'}
-                                )
-                            ], className="chart-wrapper", style={"height": "350px", "min-height": "350px"})
-                        ])
-                    ])
-                ], xs=12, md=6, className="mb-4"),
-                
-                # # Health Metrics Summary
-                # dbc.Col([
-                #     dbc.Card([
-                #         dbc.CardHeader(html.H5("Period Summary", className="card-title mb-0")),
-                #         dbc.CardBody([
-                #             html.Div([
-                #                 create_period_health_summary(df)
-                #             ])
-                #         ])
-                #     ])
-                # ], xs=12, md=4, className="mb-4"),
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader(html.H5("Health Metrics Correlation", className="card-title mb-0")),
-                        dbc.CardBody([
-                            html.P("How your metrics relate to each other", className="text-muted small mb-3"),
-                            html.Div([
-                                dcc.Graph(
-                                    figure=create_metrics_correlation_chart(df),
-                                    className="chart-container",
-                                    config={'displayModeBar': False, 'responsive': True},
-                                    style={'width': '100%', 'height': '100%'}
-                                )
-                            ], className="chart-wrapper")
-                        ])
-                    ])
-                ], xs=12, md=6, className="mb-4"),
-            ]),
-        ])
-
-    except Exception as e:
-        return dbc.Alert(f"Error loading detailed analysis: {str(e)}", color="danger")
 
 
 @callback(
@@ -747,172 +678,3 @@ def create_period_health_summary(df):
             ], className="mb-2"),
         ])
     ])
-
-
-def create_metrics_correlation_chart(df):
-    """Create a correlation chart showing relationships between metrics"""
-    if df.empty or len(df) < 2:
-        return create_empty_chart("Need at least 2 days of data for correlation analysis")
-    
-    # Calculate correlations
-    metrics = ['resting_hr', 'max_hr', 'sleep_hours', 'hrv_rest']
-    correlation_data = []
-    
-    for i, metric1 in enumerate(metrics):
-        for j, metric2 in enumerate(metrics):
-            if i < j:  # Only upper triangle to avoid duplicates
-                corr = np.corrcoef(df[metric1], df[metric2])[0, 1]
-                correlation_data.append({
-                    'metric1': metric1,
-                    'metric2': metric2,
-                    'correlation': corr
-                })
-    
-    # Create a scatter plot showing the strongest correlations
-    fig = go.Figure()
-    
-    # Find the strongest correlation to highlight
-    if correlation_data:
-        strongest_corr = max(correlation_data, key=lambda x: abs(x['correlation']))
-        
-        fig.add_trace(go.Scatter(
-            x=df[strongest_corr['metric1']],
-            y=df[strongest_corr['metric2']],
-            mode='markers',
-            marker=dict(
-                color='#1976D2',
-                size=8,
-                opacity=0.7
-            ),
-            name=f"{strongest_corr['metric1'].replace('_', ' ').title()} vs {strongest_corr['metric2'].replace('_', ' ').title()}",
-            hovertemplate='<b>%{x}</b><br><b>%{y}</b><extra></extra>'
-        ))
-        
-        # Add trendline
-        z = np.polyfit(df[strongest_corr['metric1']], df[strongest_corr['metric2']], 1)
-        p = np.poly1d(z)
-        fig.add_trace(go.Scatter(
-            x=df[strongest_corr['metric1']],
-            y=p(df[strongest_corr['metric1']]),
-            mode='lines',
-            line=dict(color='red', width=2, dash='dash'),
-            name=f"Correlation: {strongest_corr['correlation']:.2f}",
-            hoverinfo='skip'
-        ))
-        
-        fig.update_layout(
-            title=f"Strongest Correlation: {strongest_corr['metric1'].replace('_', ' ').title()} vs {strongest_corr['metric2'].replace('_', ' ').title()}",
-            xaxis_title=strongest_corr['metric1'].replace('_', ' ').title(),
-            yaxis_title=strongest_corr['metric2'].replace('_', ' ').title(),
-        )
-    else:
-        fig.add_annotation(
-            text="Not enough data for correlation analysis",
-            xref="paper", yref="paper",
-            x=0.5, y=0.5, showarrow=False
-        )
-    
-    fig.update_layout(
-        margin=dict(l=10, r=10, t=40, b=35),
-        autosize=True,
-        height=None,
-        template="plotly_white",
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-    )
-    
-    return fig
-
-
-def create_step_count_summary(df):
-    """Create step count summary statistics"""
-    if df.empty:
-        return html.Div("No data available")
-    
-    avg_steps = df["step_count"].mean()
-    min_steps = df["step_count"].min()
-    max_steps = df["step_count"].max()
-    
-    # Calculate days meeting goal
-    goal_days = (df["step_count"] >= 10000).sum()
-    total_days = len(df)
-    goal_percentage = (goal_days / total_days * 100) if total_days > 0 else 0
-    
-    return html.Div([
-        dbc.Row([
-            dbc.Col([
-                html.H3(f"{avg_steps:,.0f}", className="text-primary text-center"),
-                html.P("Avg Steps", className="text-muted text-center small"),
-            ], width=3),
-            dbc.Col([
-                html.H3(f"{max_steps:,}", className="text-success text-center"),
-                html.P("Best Day", className="text-muted text-center small"),
-            ], width=3),
-            dbc.Col([
-                html.H3(f"{min_steps:,}", className="text-danger text-center"),
-                html.P("Least Active", className="text-muted text-center small"),
-            ], width=3),
-            dbc.Col([
-                html.H3(f"{goal_percentage:.0f}%", className="text-warning text-center"),
-                html.P("Goal Days", className="text-muted text-center small"),
-            ], width=3),
-        ])
-    ])
-
-
-def create_step_count_trend_chart(df):
-    """Create step count trend chart"""
-    if df.empty:
-        return create_empty_chart("No step count data available")
-    
-    fig = go.Figure()
-    
-    # Add step count bars
-    fig.add_trace(go.Bar(
-        x=df["date"],
-        y=df["step_count"],
-        marker_color=df["step_count"].apply(lambda x: "#4CAF50" if x >= 10000 else "#FFA726"),
-        text=df["step_count"].apply(lambda x: f"{x:,}"),
-        textposition="outside",
-        hovertemplate='<b>Date:</b> %{x}<br><b>Steps:</b> %{text}<extra></extra>',
-    ))
-    
-    # Add goal line at 10,000 steps
-    fig.add_shape(
-        type="line",
-        x0=df["date"].min(),
-        x1=df["date"].max(),
-        y0=10000,
-        y1=10000,
-        line=dict(color="red", width=2, dash="dash"),
-    )
-    
-    fig.add_annotation(
-        x=df["date"].max(),
-        y=10000,
-        text="Goal: 10,000",
-        showarrow=False,
-        yshift=10,
-        xshift=-20,
-        font=dict(size=10, color="red")
-    )
-    
-    fig.update_layout(
-        margin=dict(l=10, r=10, t=10, b=35),
-        height=None,
-        template="plotly_white",
-        showlegend=False,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        yaxis=dict(
-            title="Steps",
-            range=[0, max(12000, df["step_count"].max() * 1.1)]
-        ),
-        xaxis=dict(
-            title="",
-            tickformat="%b %d",
-            tickangle=-45
-        )
-    )
-    
-    return fig

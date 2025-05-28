@@ -1,7 +1,6 @@
 from dash import html, dcc, callback, Input, Output, State, callback_context
 import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
-from dash.exceptions import PreventUpdate
 
 def create_date_selector():
     """

@@ -5,7 +5,8 @@ import dash_bootstrap_components as dbc
 from flask_login import current_user
 
 # Import custom components
-from layouts.footer import create_footer
+from components.participant.navbar import create_navbar
+from components.footer import create_footer
 from utils.database import get_user_latest_data_date
 
 def create_layout():
@@ -33,36 +34,7 @@ def create_layout():
     
     return html.Div([
         # Navigation bar - outside the container for full width
-        dbc.Navbar(
-            dbc.Container([
-                html.A(
-                    dbc.Row([
-                        dbc.Col(html.Img(src="/assets/logo.svg", height="30px"), width="auto"),
-                        dbc.Col(dbc.NavbarBrand("FitonDuty | Dashboard", className="ms-2")),
-                    ],
-                    align="center",
-                    className="g-0",
-                    ),
-                    href="/",
-                    style={"textDecoration": "none"},
-                ),
-                dbc.NavbarToggler(id="navbar-toggler", n_clicks=0,),
-                dbc.Collapse(
-                    dbc.Nav([
-                        dbc.NavItem(dbc.Button("Logout", id="logout-button", className="btn-logout")),
-                    ],
-                    className="ms-auto",
-                    navbar=True),
-                    id="navbar-collapse",
-                    navbar=True,
-                    is_open=False,
-                ),
-            ]),
-            color="#0a2342",
-            className="mb-4",
-            dark=True,
-            expand="md",
-        ),
+        create_navbar(),
         
         # Main content container
         dbc.Container([
@@ -147,13 +119,6 @@ def create_layout():
                     ], xs=12),
                 ]),
             ], className="mb-5"),
-            
-            # SECTION 4: DETAILED ANALYSIS (Uses same date range as health metrics)
-            # html.Div([
-            #     html.H4("Detailed Analysis", className="section-title text-primary"),
-            #     html.P("Advanced charts based on your selected trend period", className="text-muted mb-3"),
-            #     html.Div(id="detailed-analysis-container"),
-            # ], className="mb-5"),
             
             # Footer
             create_footer()

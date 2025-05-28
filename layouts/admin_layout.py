@@ -9,7 +9,7 @@ from components.admin.sidebar import create_admin_sidebar
 from components.admin.group_comparison import create_group_comparison
 from components.admin.group_summary import create_group_summary
 from components.admin.participant_detail import create_participant_detail
-from layouts.footer import create_footer
+from components.footer import create_footer
 
 def create_layout():
     """
