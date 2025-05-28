@@ -462,8 +462,6 @@ def update_admin_anomaly_timeline(participant_id, date_range):
         empty_fig = create_empty_chart("No participant or date range selected")
         return html.Div("No data available"), empty_fig
 
-    print(f"TIMELINE CALLBACK TRIGGERED - participant_id: {participant_id}, date_range: {date_range}")
-
     # Extract date info
     start_date = date_range.get("start_date")
     end_date = date_range.get("end_date")
