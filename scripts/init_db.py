@@ -157,6 +157,7 @@ def create_tables(engine):
             max_hr INTEGER,
             sleep_hours NUMERIC(4,2),
             hrv_rest INTEGER,
+            step_count INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE (user_id, date)
         )
@@ -419,6 +420,7 @@ def import_mock_data(engine, user_id, start_date, end_date, overwrite=False):
     max_hr_base = random.randint(140, 180)
     sleep_base = random.uniform(6.5, 8.5)
     hrv_base = random.randint(40, 80)
+    step_count_base = random.randint(6000, 12000)  # Base daily steps
     
     # If not overwriting, get existing dates to skip
     skip_dates = set()
@@ -446,11 +448,16 @@ def import_mock_data(engine, user_id, start_date, end_date, overwrite=False):
             continue
         
         # Generate metrics for this date
+        # Add some weekly variation (lower steps on weekends)
+        weekday = date.weekday()
+        weekend_factor = 0.8 if weekday >= 5 else 1.0
+        
         metrics = {
             'resting_hr': resting_hr_base + random.randint(-5, 6),
             'max_hr': max_hr_base + random.randint(-10, 11),
             'sleep_hours': max(0, sleep_base + random.normalvariate(0, 0.7)),
             'hrv_rest': max(10, hrv_base + random.randint(-15, 16)),
+            'step_count': int(step_count_base * weekend_factor + random.randint(-2000, 3000)),
         }
         
         # Generate heart rate zone percentages (5 zones instead of 7)
@@ -496,6 +503,7 @@ def import_mock_data(engine, user_id, start_date, end_date, overwrite=False):
     
     print(f"Successfully generated {success_count} days of health data for user {user_id}")
     return success_count > 0
+
 
 def generate_mock_anomaly_data(user_id, start_date, end_date, interval_minutes=5):
     """
@@ -610,15 +618,16 @@ def save_health_metrics(engine, user_id, date, metrics):
     # First insert or update the health_metrics record
     upsert_metrics_query = text("""
         INSERT INTO health_metrics 
-            (user_id, date, resting_hr, max_hr, sleep_hours, hrv_rest)
+            (user_id, date, resting_hr, max_hr, sleep_hours, hrv_rest, step_count)
         VALUES 
-            (:user_id, :date, :resting_hr, :max_hr, :sleep_hours, :hrv_rest)
+            (:user_id, :date, :resting_hr, :max_hr, :sleep_hours, :hrv_rest, :step_count)
         ON CONFLICT (user_id, date) 
         DO UPDATE SET
             resting_hr = :resting_hr,
             max_hr = :max_hr,
             sleep_hours = :sleep_hours,
             hrv_rest = :hrv_rest,
+            step_count = :step_count,
             created_at = CURRENT_TIMESTAMP
         RETURNING id
     """)
@@ -668,6 +677,7 @@ def save_health_metrics(engine, user_id, date, metrics):
                     "max_hr": metrics.get('max_hr'),
                     "sleep_hours": metrics.get('sleep_hours'),
                     "hrv_rest": metrics.get('hrv_rest'),
+                    "step_count": metrics.get('step_count', 0),
                 }
             )
             

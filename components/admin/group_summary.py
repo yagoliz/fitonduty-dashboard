@@ -78,7 +78,7 @@ def create_group_summary(group_df, group_name):
             ], width=12, lg=6, className="mb-4"),
         ]),
         
-        # HRV and activity row
+        # HRV and Step Count row
         dbc.Row([
             # HRV comparison
             dbc.Col([
@@ -107,9 +107,37 @@ def create_group_summary(group_df, group_name):
                     ])
                 ])
             ], width=12, lg=6, className="mb-4"),
+            
+            # NEW: Step Count comparison
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader(html.H5("Daily Steps Comparison", className="card-title")),
+                    dbc.CardBody([
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_participant_bar_chart(
+                                    group_df, 
+                                    'participant_name', 
+                                    ['step_count'],
+                                    ['Daily Steps'],
+                                    ['#FFA726'],
+                                    'Average Daily Steps Comparison',
+                                    'steps'
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
+                    ])
+                ])
+            ], width=12, lg=6, className="mb-4"),
         ]),
         
-        # Participant metrics table
+        # Participant metrics table - Updated to include step count
         dbc.Row([
             dbc.Col([
                 dbc.Card([
@@ -117,7 +145,7 @@ def create_group_summary(group_df, group_name):
                     dbc.CardBody([
                         html.Div([
                             dbc.Table.from_dataframe(
-                                group_df[['participant_name', 'resting_hr', 'max_hr', 'sleep_hours', 'hrv_rest']]
+                                group_df[['participant_name', 'resting_hr', 'max_hr', 'sleep_hours', 'hrv_rest', 'step_count']]
                                 .groupby('participant_name').mean().reset_index().round(1),
                                 striped=True,
                                 bordered=True,
@@ -129,6 +157,7 @@ def create_group_summary(group_df, group_name):
                                     'max_hr': 'Max HR (bpm)',
                                     'sleep_hours': 'Sleep (hrs)',
                                     'hrv_rest': 'HRV (ms)',
+                                    'step_count': 'Avg Steps',
                                 }
                             )
                         ])
