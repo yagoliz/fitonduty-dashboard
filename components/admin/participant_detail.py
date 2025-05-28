@@ -32,7 +32,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                         html.P("Resting Heart Rate (bpm)", className="card-text text-center"),
                     ])
                 ], color="light", outline=True)
-            ], width=6, md=3, className="mb-4"),
+            ], className="mb-5"),
 
             # Max HR card
             dbc.Col([
@@ -42,7 +42,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                         html.P("Max Heart Rate (bpm)", className="card-text text-center"),
                     ])
                 ], color="light", outline=True)
-            ], width=6, md=3, className="mb-4"),
+            ], className="mb-5"),
             
             # Sleep card
             dbc.Col([
@@ -52,7 +52,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                         html.P("Sleep Hours", className="card-text text-center"),
                     ])
                 ], color="light", outline=True)
-            ], width=6, md=3, className="mb-4"),
+            ], className="mb-5"),
             
             # HRV card
             dbc.Col([
@@ -62,7 +62,17 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                         html.P("HRV (ms)", className="card-text text-center"),
                     ])
                 ], color="light", outline=True)
-            ], width=6, md=3, className="mb-4"),
+            ], className="mb-5"),
+
+            # Step count card
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4(f"{df_single_day['step_count'].iloc[0]:.0f}", className="card-title text-center text-warning"),
+                        html.P("Steps ", className="card-text text-center"),
+                    ])
+                ], color="light", outline=True)
+            ], className="mb-5"),
         ]),
 
         html.Div([
