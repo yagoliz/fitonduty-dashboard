@@ -11,7 +11,8 @@
 
 /* Chart-specific styles */
 @import url('./visualization-charts.css');
-@import url('./ranking.css');
+@import url('./visualization-ranking.css');
+@import url('./ranking-race.css');
 
 /* Layout styles */
 @import url('./layout-navbar.css');

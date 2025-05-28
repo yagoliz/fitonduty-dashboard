@@ -1,0 +1,69 @@
+/* assets/css/ranking-race.css */
+
+/* Race visualization specific styles */
+.race-visualization-card {
+    background: linear-gradient(135deg, rgba(0, 119, 182, 0.02) 0%, rgba(144, 224, 239, 0.02) 100%);
+    border: 1px solid rgba(0, 119, 182, 0.1);
+}
+
+/* Style the race plot container */
+.race-plot-container {
+    position: relative;
+    width: 100%;
+    min-height: 250px;
+}
+
+/* Enhance the ranking cards */
+.ranking-summary-card {
+    transition: all 0.3s ease;
+}
+
+.ranking-summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Emoji animations */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Apply bounce animation to first place */
+.ranking-first-place {
+    animation: bounce 2s ease-in-out infinite;
+}
+
+/* Progress bar enhancements */
+.ranking-progress {
+    position: relative;
+    overflow: visible;
+}
+
+.ranking-progress::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile responsiveness for race plot */
+@media (max-width: 768px) {
+    .race-plot-container {
+        min-height: 200px;
+    }
+    
+    /* Adjust text sizes on mobile */
+    .race-visualization-card h2 {
+        font-size: 1.5rem;
+    }
+}

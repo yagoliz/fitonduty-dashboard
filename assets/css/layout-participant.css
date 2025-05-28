@@ -73,3 +73,53 @@
         font-size: 1.25rem;
     }
 }
+
+.section-subtitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--secondary);
+    border-left: 4px solid var(--primary);
+    padding-left: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Enhance metric box styling for 5 columns on desktop */
+@media (min-width: 768px) {
+    .metric-box {
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    /* Ensure equal spacing for 5 columns */
+    .row.g-3 > [class*='col-md-2'] {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+}
+
+/* Step count specific styling */
+.text-warning {
+    color: #FFA726 !important;
+}
+
+/* Enhance the metric value display */
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.5px;
+}
+
+/* For larger step count numbers */
+.metric-box .metric-value {
+    font-size: 1.8rem;
+}
+
+@media (max-width: 768px) {
+    .metric-box .metric-value {
+        font-size: 1.5rem;
+    }
+}

@@ -233,7 +233,7 @@ def load_participant_data(user_id, start_date=None, end_date=None):
     if start_date and end_date:
         query = text("""
             SELECT 
-                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
+                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest, hm.step_count,
                 hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
                 hrz.intense_percent, hrz.beast_mode_percent,
                 ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
@@ -252,7 +252,7 @@ def load_participant_data(user_id, start_date=None, end_date=None):
     elif start_date:
         query = text("""
             SELECT 
-                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
+                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest, hm.step_count,
                 hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
                 hrz.intense_percent, hrz.beast_mode_percent,
                 ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
@@ -270,7 +270,7 @@ def load_participant_data(user_id, start_date=None, end_date=None):
     elif end_date:
         query = text("""
             SELECT 
-                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
+                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest, hm.step_count,
                 hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
                 hrz.intense_percent, hrz.beast_mode_percent,
                 ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
@@ -291,7 +291,7 @@ def load_participant_data(user_id, start_date=None, end_date=None):
         thirty_days_ago = today - timedelta(days=30)
         query = text("""
             SELECT 
-                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
+                hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest, hm.step_count,
                 hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
                 hrz.intense_percent, hrz.beast_mode_percent,
                 ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
@@ -315,89 +315,6 @@ def load_participant_data(user_id, start_date=None, end_date=None):
         print(f"Error loading data from database: {e}")
         return pd.DataFrame()  # Return empty dataframe on error
 
-def save_health_metrics(user_id, date, metrics):
-    """
-    Save health metrics for a user
-    
-    Args:
-        user_id: User ID
-        date: Date for the metrics
-        metrics: Dictionary with health metrics data
-    """
-    # First insert or update the health_metrics record
-    upsert_metrics_query = text("""
-        INSERT INTO health_metrics 
-            (user_id, date, resting_hr, max_hr, sleep_hours, hrv_rest)
-        VALUES 
-            (:user_id, :date, :resting_hr, :max_hr, :sleep_hours, :hrv_rest)
-        ON CONFLICT (user_id, date) 
-        DO UPDATE SET
-            resting_hr = :resting_hr,
-            max_hr = :max_hr,
-            sleep_hours = :sleep_hours,
-            hrv_rest = :hrv_rest,
-            created_at = CURRENT_TIMESTAMP
-        RETURNING id
-    """)
-    
-    # Then insert or update the heart rate zones
-    upsert_zones_query = text("""
-        INSERT INTO heart_rate_zones
-            (health_metric_id, zone1_percent, zone2_percent, zone3_percent, 
-             zone4_percent, zone5_percent, zone6_percent, zone7_percent)
-        VALUES
-            (:health_metric_id, :zone1_percent, :zone2_percent, :zone3_percent,
-             :zone4_percent, :zone5_percent, :zone6_percent, :zone7_percent)
-        ON CONFLICT (health_metric_id)
-        DO UPDATE SET
-            zone1_percent = :zone1_percent,
-            zone2_percent = :zone2_percent,
-            zone3_percent = :zone3_percent,
-            zone4_percent = :zone4_percent,
-            zone5_percent = :zone5_percent,
-            zone6_percent = :zone6_percent,
-            zone7_percent = :zone7_percent
-    """)
-    
-    try:
-        with engine.begin() as conn:  # Use transaction
-            # Insert or update health metrics
-            metrics_result = conn.execute(
-                upsert_metrics_query,
-                {
-                    "user_id": user_id,
-                    "date": date,
-                    "resting_hr": metrics.get('resting_hr'),
-                    "max_hr": metrics.get('max_hr'),
-                    "sleep_hours": metrics.get('sleep_hours'),
-                    "hrv_rest": metrics.get('hrv_rest'),
-                }
-            )
-            
-            # Get the health metric ID
-            health_metric_id = metrics_result.fetchone()[0]
-            
-            # Insert or update heart rate zones if provided
-            if all(f'zone{i}_percent' in metrics for i in range(1, 8)):
-                conn.execute(
-                    upsert_zones_query,
-                    {
-                        "health_metric_id": health_metric_id,
-                        "zone1_percent": metrics.get('zone1_percent', 0),
-                        "zone2_percent": metrics.get('zone2_percent', 0),
-                        "zone3_percent": metrics.get('zone3_percent', 0),
-                        "zone4_percent": metrics.get('zone4_percent', 0),
-                        "zone5_percent": metrics.get('zone5_percent', 0),
-                        "zone6_percent": metrics.get('zone6_percent', 0),
-                        "zone7_percent": metrics.get('zone7_percent', 0)
-                    }
-                )
-            
-        return True
-    except Exception as e:
-        print(f"Error saving health metrics: {e}")
-        return False
-    
 
 def get_participant_ranking(user_id, start_date, end_date):
     """
@@ -434,6 +351,44 @@ def get_participant_ranking(user_id, start_date, end_date):
     except Exception as e:
         print(f"Error getting participant ranking: {e}")
         return None
+    
+
+def get_all_group_participants_ranking(user_id, start_date, end_date):
+    """
+    Get ranking data for all participants in the user's group
+    
+    Args:
+        user_id: User ID to determine the group
+        start_date: Start date for data range
+        end_date: End date for data range
+        
+    Returns:
+        List of dictionaries with all participants' ranking data
+    """
+    
+    query = text("""
+        SELECT * FROM get_group_participants_ranking(:user_id, :start_date, :end_date)
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {
+                "user_id": user_id,
+                "start_date": start_date,
+                "end_date": end_date
+            })
+            
+            participants_data = []
+            for row in result:
+                participant_dict = {}
+                for idx, col in enumerate(result.keys()):
+                    participant_dict[col] = row[idx]
+                participants_data.append(participant_dict)
+                
+            return participants_data
+    except Exception as e:
+        print(f"Error getting group participants ranking: {e}")
+        return []
     
 
 def load_anomaly_data(user_id, date=None, start_date=None, end_date=None):

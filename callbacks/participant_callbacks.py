@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import numpy as np
 
 from components.participant.participant_ranking import create_participant_ranking_layout
-from utils.database import load_participant_data, get_participant_ranking
+from utils.database import load_participant_data, get_participant_ranking, get_all_group_participants_ranking
 from utils.visualization import create_empty_chart, create_heart_rate_zones_chart
 from utils.visualization import create_heart_rate_zones_chart, create_movement_speed_chart
 
@@ -40,7 +40,10 @@ def update_participant_ranking_whole_dataset(pathname):
                 className="mb-3"
             )
         
-        return create_participant_ranking_layout(ranking_data)
+        # Get all participants data for the race visualization
+        all_participants_data = get_all_group_participants_ranking(user_id, far_past, far_future)
+        
+        return create_participant_ranking_layout(ranking_data, all_participants_data)
 
     except Exception as e:
         return dbc.Alert(f"Error loading ranking data: {str(e)}", color="danger")
@@ -77,7 +80,7 @@ def update_daily_snapshot(selected_date):
                     html.P("Complete health overview for the selected day", className="text-muted small mb-0 mt-1")
                 ]),
                 dbc.CardBody([
-                    # Primary Metrics Row
+                    # Primary Metrics Row - Now includes Step Count
                     dbc.Row([
                         dbc.Col([
                             html.Div([
@@ -85,7 +88,7 @@ def update_daily_snapshot(selected_date):
                                 html.P("Resting HR", className="text-center small mb-0"),
                                 html.P("(bpm)", className="text-center text-muted extra-small"),
                             ], className="metric-box")
-                        ], xs=6, md=3, className="mb-3"),
+                        ], xs=6, md=2, className="mb-3"),
                         
                         dbc.Col([
                             html.Div([
@@ -93,7 +96,7 @@ def update_daily_snapshot(selected_date):
                                 html.P("Max HR", className="text-center small mb-0"),
                                 html.P("(bpm)", className="text-center text-muted extra-small"),
                             ], className="metric-box")
-                        ], xs=6, md=3, className="mb-3"),
+                        ], xs=6, md=2, className="mb-3"),
                         
                         dbc.Col([
                             html.Div([
@@ -101,7 +104,7 @@ def update_daily_snapshot(selected_date):
                                 html.P("Sleep", className="text-center small mb-0"),
                                 html.P("(hours)", className="text-center text-muted extra-small"),
                             ], className="metric-box")
-                        ], xs=6, md=3, className="mb-3"),
+                        ], xs=6, md=2, className="mb-3"),
                         
                         dbc.Col([
                             html.Div([
@@ -109,10 +112,19 @@ def update_daily_snapshot(selected_date):
                                 html.P("HRV", className="text-center small mb-0"),
                                 html.P("(ms)", className="text-center text-muted extra-small"),
                             ], className="metric-box")
-                        ], xs=6, md=3, className="mb-3"),
+                        ], xs=6, md=2, className="mb-3"),
+                        
+                        # NEW: Step Count
+                        dbc.Col([
+                            html.Div([
+                                html.H3(f"{df['step_count'].iloc[0]:,}", className="text-warning text-center metric-value mb-1"),
+                                html.P("Steps", className="text-center small mb-0"),
+                                html.P("(count)", className="text-center text-muted extra-small"),
+                            ], className="metric-box")
+                        ], xs=12, md=2, className="mb-3"),
                     ], className="g-3"),
                     
-                    # Additional insights row
+                    # Additional insights row - Updated to include step insights
                     html.Hr(className="my-3"),
                     dbc.Row([
                         dbc.Col([
@@ -121,7 +133,7 @@ def update_daily_snapshot(selected_date):
                                 html.P(f"{df['max_hr'].iloc[0] - df['resting_hr'].iloc[0]:.0f} bpm", className="h5 mb-1"),
                                 html.Small("Difference between max and resting HR", className="text-muted")
                             ])
-                        ], xs=12, md=4, className="mb-2"),
+                        ], xs=12, md=3, className="mb-2"),
                         
                         dbc.Col([
                             html.Div([
@@ -132,7 +144,7 @@ def update_daily_snapshot(selected_date):
                                 ),
                                 html.Small("Based on 7+ hours recommendation", className="text-muted")
                             ])
-                        ], xs=12, md=4, className="mb-2"),
+                        ], xs=12, md=3, className="mb-2"),
                         
                         dbc.Col([
                             html.Div([
@@ -143,7 +155,19 @@ def update_daily_snapshot(selected_date):
                                 ),
                                 html.Small("Based on HRV levels", className="text-muted")
                             ])
-                        ], xs=12, md=4, className="mb-2"),
+                        ], xs=12, md=3, className="mb-2"),
+                        
+                        # NEW: Step Goal Status
+                        dbc.Col([
+                            html.Div([
+                                html.H6("Step Goal", className="text-muted mb-2"),
+                                html.P(
+                                    "Achieved!" if df['step_count'].iloc[0] >= 10000 else f"{(df['step_count'].iloc[0] / 10000 * 100):.0f}% of Goal", 
+                                    className="h5 mb-1 text-success" if df['step_count'].iloc[0] >= 10000 else "h5 mb-1 text-warning"
+                                ),
+                                html.Small("Based on 10,000 steps/day", className="text-muted")
+                            ])
+                        ], xs=12, md=3, className="mb-2"),
                     ])
                 ])
             ], className="shadow-sm mb-4"),
@@ -189,7 +213,7 @@ def update_daily_snapshot(selected_date):
     except Exception as e:
         return dbc.Alert(f"Error loading daily snapshot: {str(e)}", color="danger")
 
-# SECTION 3: HEALTH METRICS - Trends over period
+# SECTION 3: HEALTH METRICS - Trends over period (Reorganized into 2 rows)
 @callback(
     Output("health-metrics-container", "children"),
     Input("trends-date-range", "data")
@@ -213,8 +237,10 @@ def update_health_metrics_trends(date_range_data):
                 color="warning"
             )
 
-        # Create the health metrics component with charts and summary stats
+        # Create the health metrics component with charts reorganized into 2 rows
         return html.Div([
+            # Row 1: Heart Rate and HRV
+            html.H5("Cardiovascular Metrics", className="section-subtitle mb-3"),
             dbc.Row([
                 # Heart Rate Card
                 dbc.Col([
@@ -235,28 +261,7 @@ def update_health_metrics_trends(date_range_data):
                             ], className="chart-wrapper")
                         ])
                     ])
-                ], xs=12, lg=4, className="mb-4"),
-                
-                # Sleep Card
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader(html.H5("Sleep", className="card-title mb-0")),
-                        dbc.CardBody([
-                            # Summary statistics
-                            html.Div([
-                                create_sleep_summary(df)
-                            ], className="metrics-summary"),
-                            html.Div([
-                                dcc.Graph(
-                                    figure=create_sleep_trend_chart(df),
-                                    className="chart-container",
-                                    config={'displayModeBar': False, 'responsive': True},
-                                    style={'width': '100%', 'height': '100%'}
-                                )
-                            ], className="chart-wrapper")
-                        ])
-                    ])
-                ], xs=12, lg=4, className="mb-4"),
+                ], xs=12, lg=6, className="mb-4"),
                 
                 # HRV Card
                 dbc.Col([
@@ -277,7 +282,53 @@ def update_health_metrics_trends(date_range_data):
                             ], className="chart-wrapper")
                         ])
                     ])
-                ], xs=12, lg=4, className="mb-4"),
+                ], xs=12, lg=6, className="mb-4"),
+            ]),
+            
+            # Row 2: Sleep and Steps
+            html.H5("Recovery & Activity Metrics", className="section-subtitle mb-3 mt-4"),
+            dbc.Row([
+                # Sleep Card
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Sleep", className="card-title mb-0")),
+                        dbc.CardBody([
+                            # Summary statistics
+                            html.Div([
+                                create_sleep_summary(df)
+                            ], className="metrics-summary"),
+                            html.Div([
+                                dcc.Graph(
+                                    figure=create_sleep_trend_chart(df),
+                                    className="chart-container",
+                                    config={'displayModeBar': False, 'responsive': True},
+                                    style={'width': '100%', 'height': '100%'}
+                                )
+                            ], className="chart-wrapper")
+                        ])
+                    ])
+                ], xs=12, lg=6, className="mb-4"),
+                
+                # NEW: Step Count Card
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Daily Steps", className="card-title mb-0")),
+                        dbc.CardBody([
+                            # Summary statistics
+                            html.Div([
+                                create_step_count_summary(df)
+                            ], className="metrics-summary"),
+                            html.Div([
+                                dcc.Graph(
+                                    figure=create_step_count_trend_chart(df),
+                                    className="chart-container",
+                                    config={'displayModeBar': False, 'responsive': True},
+                                    style={'width': '100%', 'height': '100%'}
+                                )
+                            ], className="chart-wrapper")
+                        ])
+                    ])
+                ], xs=12, lg=6, className="mb-4"),
             ])
         ])
 
@@ -768,6 +819,100 @@ def create_metrics_correlation_chart(df):
         template="plotly_white",
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
+    )
+    
+    return fig
+
+
+def create_step_count_summary(df):
+    """Create step count summary statistics"""
+    if df.empty:
+        return html.Div("No data available")
+    
+    avg_steps = df["step_count"].mean()
+    min_steps = df["step_count"].min()
+    max_steps = df["step_count"].max()
+    
+    # Calculate days meeting goal
+    goal_days = (df["step_count"] >= 10000).sum()
+    total_days = len(df)
+    goal_percentage = (goal_days / total_days * 100) if total_days > 0 else 0
+    
+    return html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.H3(f"{avg_steps:,.0f}", className="text-primary text-center"),
+                html.P("Avg Steps", className="text-muted text-center small"),
+            ], width=3),
+            dbc.Col([
+                html.H3(f"{max_steps:,}", className="text-success text-center"),
+                html.P("Best Day", className="text-muted text-center small"),
+            ], width=3),
+            dbc.Col([
+                html.H3(f"{min_steps:,}", className="text-danger text-center"),
+                html.P("Least Active", className="text-muted text-center small"),
+            ], width=3),
+            dbc.Col([
+                html.H3(f"{goal_percentage:.0f}%", className="text-warning text-center"),
+                html.P("Goal Days", className="text-muted text-center small"),
+            ], width=3),
+        ])
+    ])
+
+
+def create_step_count_trend_chart(df):
+    """Create step count trend chart"""
+    if df.empty:
+        return create_empty_chart("No step count data available")
+    
+    fig = go.Figure()
+    
+    # Add step count bars
+    fig.add_trace(go.Bar(
+        x=df["date"],
+        y=df["step_count"],
+        marker_color=df["step_count"].apply(lambda x: "#4CAF50" if x >= 10000 else "#FFA726"),
+        text=df["step_count"].apply(lambda x: f"{x:,}"),
+        textposition="outside",
+        hovertemplate='<b>Date:</b> %{x}<br><b>Steps:</b> %{text}<extra></extra>',
+    ))
+    
+    # Add goal line at 10,000 steps
+    fig.add_shape(
+        type="line",
+        x0=df["date"].min(),
+        x1=df["date"].max(),
+        y0=10000,
+        y1=10000,
+        line=dict(color="red", width=2, dash="dash"),
+    )
+    
+    fig.add_annotation(
+        x=df["date"].max(),
+        y=10000,
+        text="Goal: 10,000",
+        showarrow=False,
+        yshift=10,
+        xshift=-20,
+        font=dict(size=10, color="red")
+    )
+    
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=35),
+        height=None,
+        template="plotly_white",
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        yaxis=dict(
+            title="Steps",
+            range=[0, max(12000, df["step_count"].max() * 1.1)]
+        ),
+        xaxis=dict(
+            title="",
+            tickformat="%b %d",
+            tickangle=-45
+        )
     )
     
     return fig
