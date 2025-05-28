@@ -122,6 +122,7 @@ def create_layout():
                         # Store for the calculated start date
                         dcc.Store(id="trends-date-range", data={
                             "end_date": today.isoformat(),
+                            "start_date": (today - timedelta(days=6)).isoformat(),
                             "days_back": 7
                         })
                     ], xs=12, md=6, lg=4, className="mb-3"),
@@ -171,20 +172,20 @@ def toggle_navbar_collapse(n_clicks, is_open):
      Input("trends-btn-90-days", "n_clicks"),
      Input("trends-end-date-picker", "date")],
     [State("trends-date-range", "data")],
-    prevent_initial_call=True
+    # prevent_initial_call=True
 )
 def update_trends_date_range(n_7, n_30, n_90, end_date, current_data):
     """Update the trends date range based on button clicks or date changes"""
     
     ctx = callback_context
-    if not ctx.triggered:
-        return current_data, ""
+    # if not ctx.triggered:
+    #     return current_data, ""
     
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
     
     # Convert end_date to date object if it's a string
     if isinstance(end_date, str):
-        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
     else:
         end_date_obj = end_date
     
