@@ -11,6 +11,7 @@ import numpy as np
 from components.participant.participant_ranking import create_participant_ranking_layout
 from utils.database import load_participant_data, get_participant_ranking
 from utils.visualization import create_empty_chart, create_heart_rate_zones_chart
+from utils.visualization import create_heart_rate_zones_chart, create_movement_speed_chart
 
 
 # SECTION 1: RANKING - Uses whole dataset
@@ -28,8 +29,8 @@ def update_participant_ranking_whole_dataset(pathname):
     try:
         # Get ranking over entire dataset (no date restrictions)
         # We'll use a very wide date range to capture all data
-        far_past = datetime(2020, 1, 1).date()
-        far_future = datetime(2030, 12, 31).date()
+        far_past = datetime(2024, 1, 1).date()
+        far_future = datetime(2026, 12, 31).date()
         
         ranking_data = get_participant_ranking(user_id, far_past, far_future)
         
@@ -67,87 +68,126 @@ def update_daily_snapshot(selected_date):
                 color="warning"
             )
 
-        # Create detailed snapshot card
-        return dbc.Card([
-            dbc.CardHeader([
-                html.H5(f"Health Metrics for {selected_date}", className="mb-0"),
-                html.P("Complete health overview for the selected day", className="text-muted small mb-0 mt-1")
-            ]),
-            dbc.CardBody([
-                # Primary Metrics Row
-                dbc.Row([
-                    dbc.Col([
-                        html.Div([
-                            html.H3(f"{df['resting_hr'].iloc[0]:.0f}", className="text-primary text-center metric-value mb-1"),
-                            html.P("Resting HR", className="text-center small mb-0"),
-                            html.P("(bpm)", className="text-center text-muted extra-small"),
-                        ], className="metric-box")
-                    ], xs=6, md=3, className="mb-3"),
+        # Create detailed snapshot with charts
+        return html.Div([
+            # Summary Card
+            dbc.Card([
+                dbc.CardHeader([
+                    html.H5(f"Health Metrics for {selected_date}", className="mb-0"),
+                    html.P("Complete health overview for the selected day", className="text-muted small mb-0 mt-1")
+                ]),
+                dbc.CardBody([
+                    # Primary Metrics Row
+                    dbc.Row([
+                        dbc.Col([
+                            html.Div([
+                                html.H3(f"{df['resting_hr'].iloc[0]:.0f}", className="text-primary text-center metric-value mb-1"),
+                                html.P("Resting HR", className="text-center small mb-0"),
+                                html.P("(bpm)", className="text-center text-muted extra-small"),
+                            ], className="metric-box")
+                        ], xs=6, md=3, className="mb-3"),
+                        
+                        dbc.Col([
+                            html.Div([
+                                html.H3(f"{df['max_hr'].iloc[0]:.0f}", className="text-danger text-center metric-value mb-1"),
+                                html.P("Max HR", className="text-center small mb-0"),
+                                html.P("(bpm)", className="text-center text-muted extra-small"),
+                            ], className="metric-box")
+                        ], xs=6, md=3, className="mb-3"),
+                        
+                        dbc.Col([
+                            html.Div([
+                                html.H3(f"{df['sleep_hours'].iloc[0]:.1f}", className="text-success text-center metric-value mb-1"),
+                                html.P("Sleep", className="text-center small mb-0"),
+                                html.P("(hours)", className="text-center text-muted extra-small"),
+                            ], className="metric-box")
+                        ], xs=6, md=3, className="mb-3"),
+                        
+                        dbc.Col([
+                            html.Div([
+                                html.H3(f"{df['hrv_rest'].iloc[0]:.0f}", className="text-info text-center metric-value mb-1"),
+                                html.P("HRV", className="text-center small mb-0"),
+                                html.P("(ms)", className="text-center text-muted extra-small"),
+                            ], className="metric-box")
+                        ], xs=6, md=3, className="mb-3"),
+                    ], className="g-3"),
                     
-                    dbc.Col([
-                        html.Div([
-                            html.H3(f"{df['max_hr'].iloc[0]:.0f}", className="text-danger text-center metric-value mb-1"),
-                            html.P("Max HR", className="text-center small mb-0"),
-                            html.P("(bpm)", className="text-center text-muted extra-small"),
-                        ], className="metric-box")
-                    ], xs=6, md=3, className="mb-3"),
-                    
-                    dbc.Col([
-                        html.Div([
-                            html.H3(f"{df['sleep_hours'].iloc[0]:.1f}", className="text-success text-center metric-value mb-1"),
-                            html.P("Sleep", className="text-center small mb-0"),
-                            html.P("(hours)", className="text-center text-muted extra-small"),
-                        ], className="metric-box")
-                    ], xs=6, md=3, className="mb-3"),
-                    
-                    dbc.Col([
-                        html.Div([
-                            html.H3(f"{df['hrv_rest'].iloc[0]:.0f}", className="text-info text-center metric-value mb-1"),
-                            html.P("HRV", className="text-center small mb-0"),
-                            html.P("(ms)", className="text-center text-muted extra-small"),
-                        ], className="metric-box")
-                    ], xs=6, md=3, className="mb-3"),
-                ], className="g-3"),
-                
-                # Additional insights row
-                html.Hr(className="my-3"),
-                dbc.Row([
-                    dbc.Col([
-                        html.Div([
-                            html.H6("Heart Rate Range", className="text-muted mb-2"),
-                            html.P(f"{df['max_hr'].iloc[0] - df['resting_hr'].iloc[0]:.0f} bpm", className="h5 mb-1"),
-                            html.Small("Difference between max and resting HR", className="text-muted")
-                        ])
-                    ], xs=12, md=4, className="mb-2"),
-                    
-                    dbc.Col([
-                        html.Div([
-                            html.H6("Sleep Quality", className="text-muted mb-2"),
-                            html.P(
-                                "Good" if df['sleep_hours'].iloc[0] >= 7 else "Needs Improvement", 
-                                className="h5 mb-1 text-success" if df['sleep_hours'].iloc[0] >= 7 else "h5 mb-1 text-warning"
-                            ),
-                            html.Small("Based on 7+ hours recommendation", className="text-muted")
-                        ])
-                    ], xs=12, md=4, className="mb-2"),
-                    
-                    dbc.Col([
-                        html.Div([
-                            html.H6("Recovery Status", className="text-muted mb-2"),
-                            html.P(
-                                "Good" if df['hrv_rest'].iloc[0] >= 50 else "Monitor", 
-                                className="h5 mb-1 text-success" if df['hrv_rest'].iloc[0] >= 50 else "h5 mb-1 text-info"
-                            ),
-                            html.Small("Based on HRV levels", className="text-muted")
-                        ])
-                    ], xs=12, md=4, className="mb-2"),
+                    # Additional insights row
+                    html.Hr(className="my-3"),
+                    dbc.Row([
+                        dbc.Col([
+                            html.Div([
+                                html.H6("Heart Rate Range", className="text-muted mb-2"),
+                                html.P(f"{df['max_hr'].iloc[0] - df['resting_hr'].iloc[0]:.0f} bpm", className="h5 mb-1"),
+                                html.Small("Difference between max and resting HR", className="text-muted")
+                            ])
+                        ], xs=12, md=4, className="mb-2"),
+                        
+                        dbc.Col([
+                            html.Div([
+                                html.H6("Sleep Quality", className="text-muted mb-2"),
+                                html.P(
+                                    "Good" if df['sleep_hours'].iloc[0] >= 7 else "Needs Improvement", 
+                                    className="h5 mb-1 text-success" if df['sleep_hours'].iloc[0] >= 7 else "h5 mb-1 text-warning"
+                                ),
+                                html.Small("Based on 7+ hours recommendation", className="text-muted")
+                            ])
+                        ], xs=12, md=4, className="mb-2"),
+                        
+                        dbc.Col([
+                            html.Div([
+                                html.H6("Recovery Status", className="text-muted mb-2"),
+                                html.P(
+                                    "Good" if df['hrv_rest'].iloc[0] >= 50 else "Monitor", 
+                                    className="h5 mb-1 text-success" if df['hrv_rest'].iloc[0] >= 50 else "h5 mb-1 text-info"
+                                ),
+                                html.Small("Based on HRV levels", className="text-muted")
+                            ])
+                        ], xs=12, md=4, className="mb-2"),
+                    ])
                 ])
+            ], className="shadow-sm mb-4"),
+            
+            # Charts Row
+            dbc.Row([
+                # Heart Rate Zones Doughnut Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Heart Rate Zones", className="card-title mb-0")),
+                        dbc.CardBody([
+                            html.Div([
+                                dcc.Graph(
+                                    figure=create_heart_rate_zones_chart(df, chart_type='doughnut'),
+                                    className="chart-container",
+                                    config={'displayModeBar': False, 'responsive': True},
+                                    style={'width': '100%', 'height': '100%'}
+                                )
+                            ], className="chart-wrapper", style={"min-height": "350px"})
+                        ])
+                    ])
+                ], xs=12, md=6, className="mb-4"),
+                
+                # Movement Speed Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Movement Activity", className="card-title mb-0")),
+                        dbc.CardBody([
+                            html.Div([
+                                dcc.Graph(
+                                    figure=create_movement_speed_chart(df),
+                                    className="chart-container",
+                                    config={'displayModeBar': False, 'responsive': True},
+                                    style={'width': '100%', 'height': '100%'}
+                                )
+                            ], className="chart-wrapper", style={"min-height": "350px"})
+                        ])
+                    ])
+                ], xs=12, md=6, className="mb-4"),
             ])
-        ], className="shadow-sm")
+        ])
 
     except Exception as e:
         return dbc.Alert(f"Error loading daily snapshot: {str(e)}", color="danger")
-
 
 # SECTION 3: HEALTH METRICS - Trends over period
 @callback(
@@ -309,7 +349,7 @@ def update_detailed_analysis(date_range_data):
                                     config={'displayModeBar': False, 'responsive': True},
                                     style={'width': '100%', 'height': '100%'}
                                 )
-                            ], className="chart-wrapper", style={"height": "350px", "min-height": "350px"})
+                            ], className="chart-wrapper")
                         ])
                     ])
                 ], xs=12, md=6, className="mb-4"),
@@ -319,6 +359,64 @@ def update_detailed_analysis(date_range_data):
     except Exception as e:
         return dbc.Alert(f"Error loading detailed analysis: {str(e)}", color="danger")
 
+
+@callback(
+    [Output("snapshot-date-picker", "date"),
+     Output("trends-end-date-picker", "date"),
+     Output("trends-date-range", "data", allow_duplicate=True)],
+    Input("url", "pathname"),
+    prevent_initial_call=True
+)
+def initialize_dates_with_user_data(pathname):
+    """Initialize date pickers with the user's most recent data date"""
+    if not current_user.is_authenticated:
+        raise PreventUpdate
+    
+    # Import here to avoid circular imports
+    from utils.database import get_user_latest_data_date
+    
+    user_id = current_user.id
+    latest_date = get_user_latest_data_date(user_id)
+    
+    # Use latest data date or fall back to current date
+    end_date = latest_date if latest_date else datetime.now().date()
+    start_date = end_date - timedelta(days=6)  # Default to 7 days for trends
+    
+    # Return the dates for both pickers and the trends range
+    return (
+        end_date,  # snapshot date picker
+        end_date,  # trends end date picker
+        {
+            "end_date": end_date.isoformat(),
+            "start_date": start_date.isoformat(),
+            "days_back": 7
+        }
+    )
+
+
+@callback(
+    Output("data-availability-info", "children"),
+    Input("url", "pathname")
+)
+def update_data_availability_info(pathname):
+    """Update info about data availability"""
+    if not current_user.is_authenticated:
+        return ""
+    
+    from utils.database import get_user_latest_data_date
+    
+    latest_date = get_user_latest_data_date(current_user.id)
+    
+    if latest_date:
+        days_ago = (datetime.now().date() - latest_date).days
+        if days_ago == 0:
+            return f"✅ Data available through today ({latest_date.strftime('%B %d, %Y')})"
+        elif days_ago == 1:
+            return f"📊 Most recent data from yesterday ({latest_date.strftime('%B %d, %Y')})"
+        else:
+            return f"📊 Most recent data from {days_ago} days ago ({latest_date.strftime('%B %d, %Y')})"
+    else:
+        return "⚠️ No health data found for your account"
 
 # Helper functions for creating charts
 def create_heart_rate_trend_chart(df):

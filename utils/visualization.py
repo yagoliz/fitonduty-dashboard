@@ -207,80 +207,153 @@ def create_dual_axis_chart(df, x_col, y1_col, y2_col, y1_name, y2_name, y1_color
     
     return fig
 
-def create_heart_rate_zones_chart(df):
-    """Create a bar chart showing heart rate zone distribution"""
-    # Extract zone columns
-    zone_cols = [f'zone{i}_percent' for i in range(1, 8)]
+
+def create_heart_rate_zones_chart(df, chart_type='doughnut'):
+    """Create a chart showing heart rate zone distribution - can be doughnut or bar"""
+    # Extract zone columns (updated for 5 zones)
+    zone_cols = ['very_light_percent', 'light_percent', 'moderate_percent', 'intense_percent', 'beast_mode_percent']
     
     # Check if we have zone data
     if not all(col in df.columns for col in zone_cols):
-        # Create empty chart with message
-        fig = go.Figure()
-        fig.update_layout(
-            annotations=[dict(
-                text="No heart rate zone data available",
-                xref="paper",
-                yref="paper",
-                showarrow=False,
-                font=dict(size=14)
-            )],
-            height=None,
-        )
-        return fig
+        return create_empty_chart("No heart rate zone data available")
     
-    # Get zone percentages (use first row if multiple days)
-    zone_data = df[zone_cols].iloc[0]
+    # Get zone percentages (use first row if multiple days, or average if multiple)
+    if len(df) == 1:
+        zone_data = df[zone_cols].iloc[0]
+    else:
+        zone_data = df[zone_cols].mean()
     
-    # Create zone labels
-    zone_labels = [f"Zone {i}" for i in range(1, 8)]
-    
-    # Create zone descriptions
+    # Create zone labels and descriptions
+    zone_labels = ['Very Light', 'Light', 'Moderate', 'Intense', 'Beast Mode']
     zone_desc = {
-        'Zone 1': 'Very Light (50-60% Max HR)',
-        'Zone 2': 'Light (60-70% Max HR)',
-        'Zone 3': 'Moderate (70-80% Max HR)',
-        'Zone 4': 'Hard (80-90% Max HR)',
-        'Zone 5': 'Very Hard (90-100% Max HR)',
-        'Zone 6': 'Anaerobic (100-110% Max HR)',
-        'Zone 7': 'Maximal (110%+ Max HR)'
+        'Very Light': 'Recovery & Warm-up (50-60% Max HR)',
+        'Light': 'Fat Burning (60-70% Max HR)', 
+        'Moderate': 'Aerobic Base (70-80% Max HR)',
+        'Intense': 'Threshold (80-90% Max HR)',
+        'Beast Mode': 'Maximum Effort (90%+ Max HR)'
     }
     
-    # Create color gradient from soft red to intense red
-    colors = ["#FFB3B3", "#FF9999", "#FF8080", "#FF6666", "#FF4D4D", "#FF3333", "#FF0000"]
+    # Create color gradient from light to intense
+    colors = ["#E8F5E8", "#90EE90", "#FFD700", "#FF8C00", "#FF4500"]
     
     # Create chart
     fig = go.Figure()
     
-    # Add bar chart
-    for i, (label, value) in enumerate(zip(zone_labels, zone_data)):
-        fig.add_trace(go.Bar(
-            x=[label],
-            y=[value],
-            name=label,
-            marker_color=colors[i],
-            text=[f"{value:.1f}%"],
+    if chart_type == 'doughnut':
+        # Create doughnut chart
+        fig.add_trace(go.Pie(
+            labels=zone_labels,
+            values=zone_data,
+            hole=0.4,
+            marker=dict(colors=colors, line=dict(color='#FFFFFF', width=2)),
+            textinfo='label+percent',
             textposition='auto',
-            hovertext=[f"{label}: {value:.1f}%<br>{zone_desc[label]}"],
-            hoverinfo="text"
+            hovertemplate='<b>%{label}</b><br>%{percent}<br>%{text}<extra></extra>',
+            text=[zone_desc[label] for label in zone_labels]
         ))
+        
+        # Add center text
+        fig.add_annotation(
+            text="HR Zones<br><span style='font-size:12px'>Distribution</span>",
+            showarrow=False,
+            font=dict(size=16, color="#333")
+        )
+        
+        fig.update_layout(
+            title="Heart Rate Zone Distribution",
+            showlegend=False,
+            legend=dict(
+                orientation="v",
+                yanchor="middle",
+                y=0.5,
+                xanchor="left",
+                x=1.05
+            )
+        )
+    else:
+        # Create bar chart (fallback)
+        for i, (label, value) in enumerate(zip(zone_labels, zone_data)):
+            fig.add_trace(go.Bar(
+                x=[label],
+                y=[value],
+                name=label,
+                marker_color=colors[i],
+                text=[f"{value:.1f}%"],
+                textposition='auto',
+                hovertext=[f"{label}: {value:.1f}%<br>{zone_desc[label]}"],
+                hoverinfo="text",
+                showlegend=False
+            ))
+        
+        fig.update_layout(
+            title="Heart Rate Zone Distribution",
+            xaxis_title="Heart Rate Zones",
+            yaxis_title="Percentage (%)",
+            yaxis=dict(range=[0, max(100, max(zone_data) * 1.1)])
+        )
     
-    # Update layout
+    # Common layout updates
     fig.update_layout(
-        title="Heart Rate Zone Distribution",
-        xaxis_title="Heart Rate Zones",
-        yaxis_title="Percentage (%)",
         autosize=True,
-        margin=dict(l=20, r=20, t=40, b=20),
+        margin=dict(l=20, r=20, t=50, b=20),
         height=None,
         template="plotly_white",
-        showlegend=False,
-        xaxis=dict(
-            categoryorder='array',
-            categoryarray=zone_labels
-        ),
-        yaxis=dict(
-            range=[0, max(100, max(zone_data) * 1.1)]
-        )
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig
+
+
+def create_movement_speed_chart(df):
+    """Create a bar chart showing movement speed distribution"""
+    # Extract movement columns
+    movement_cols = ['walking_minutes', 'walking_fast_minutes', 'jogging_minutes', 'running_minutes']
+    
+    # Check if we have movement data
+    if not all(col in df.columns for col in movement_cols):
+        return create_empty_chart("No movement speed data available")
+    
+    # Get movement data (use first row if single day, or average if multiple)
+    if len(df) == 1:
+        movement_data = df[movement_cols].iloc[0]
+    else:
+        movement_data = df[movement_cols].mean()
+    
+    # Create labels and colors
+    movement_labels = ['Walking', 'Walking Fast', 'Jogging', 'Running']
+    movement_colors = ["#90EE90", "#32CD32", "#FF8C00", "#FF4500"]
+    
+    # Create chart
+    fig = go.Figure()
+    
+    # Add bars
+    for i, (label, minutes) in enumerate(zip(movement_labels, movement_data)):
+        fig.add_trace(go.Bar(
+            x=[label],
+            y=[minutes],
+            name=label,
+            marker_color=movement_colors[i],
+            text=[f"{int(minutes)} min"],
+            textposition='auto',
+            hovertemplate=f'<b>{label}</b><br>%{{y:.0f}} minutes<extra></extra>',
+            showlegend=False
+        ))
+    
+    # Calculate total active minutes
+    total_active = sum(movement_data)
+    
+    fig.update_layout(
+        title=f"Movement Speed Distribution<br><sub>Total Active: {int(total_active)} minutes</sub>",
+        xaxis_title="Movement Speed",
+        yaxis_title="Minutes",
+        autosize=True,
+        margin=dict(l=20, r=20, t=60, b=20),
+        height=None,
+        template="plotly_white",
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        yaxis=dict(range=[0, max(60, max(movement_data) * 1.1)])
     )
     
     return fig

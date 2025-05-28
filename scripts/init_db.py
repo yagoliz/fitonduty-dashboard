@@ -167,17 +167,27 @@ def create_tables(engine):
         CREATE TABLE IF NOT EXISTS heart_rate_zones (
             id SERIAL PRIMARY KEY,
             health_metric_id INTEGER NOT NULL REFERENCES health_metrics(id) ON DELETE CASCADE UNIQUE,
-            zone1_percent NUMERIC(5,2),
-            zone2_percent NUMERIC(5,2),
-            zone3_percent NUMERIC(5,2),
-            zone4_percent NUMERIC(5,2),
-            zone5_percent NUMERIC(5,2),
-            zone6_percent NUMERIC(5,2),
-            zone7_percent NUMERIC(5,2),
+            very_light_percent NUMERIC(5,2),
+            light_percent NUMERIC(5,2),
+            moderate_percent NUMERIC(5,2),
+            intense_percent NUMERIC(5,2),
+            beast_mode_percent NUMERIC(5,2),
             CHECK (
-                (zone1_percent + zone2_percent + zone3_percent + zone4_percent + 
-                zone5_percent + zone6_percent + zone7_percent) BETWEEN 99.0 AND 101.0
+                (very_light_percent + light_percent + moderate_percent + intense_percent + 
+                beast_mode_percent) BETWEEN 99.0 AND 101.0
             )
+        )
+        """,
+
+        # Movement Speed Table
+        """
+        CREATE TABLE IF NOT EXISTS movement_speeds (
+            id SERIAL PRIMARY KEY,
+            health_metric_id INTEGER NOT NULL REFERENCES health_metrics(id) ON DELETE CASCADE UNIQUE,
+            walking_minutes INTEGER DEFAULT 0,
+            walking_fast_minutes INTEGER DEFAULT 0,
+            jogging_minutes INTEGER DEFAULT 0,
+            running_minutes INTEGER DEFAULT 0
         )
         """,
         
@@ -443,24 +453,42 @@ def import_mock_data(engine, user_id, start_date, end_date, overwrite=False):
             'hrv_rest': max(10, hrv_base + random.randint(-15, 16)),
         }
         
-        # Generate heart rate zone percentages
+        # Generate heart rate zone percentages (5 zones instead of 7)
+        zone_names = ['very_light', 'light', 'moderate', 'intense', 'beast_mode']
         zone_values = []
-        for i in range(1, 8):
-            if i <= 3:
-                base_pct = 20.0  # Higher percentage for lower zones
-            else:
-                base_pct = 8.0   # Lower percentage for higher zones
-                
+
+        # Generate realistic distributions
+        base_percentages = [30.0, 25.0, 20.0, 15.0, 10.0]  # Base percentages for each zone
+        for base_pct in base_percentages:
             zone_values.append(max(0, min(100, base_pct + random.normalvariate(0, 5))))
-        
+
         # Normalize to sum to 100%
         zone_sum = sum(zone_values)
         if zone_sum > 0:
             zone_values = [v / zone_sum * 100 for v in zone_values]
-        
+
         # Add zones to metrics
-        for i, value in enumerate(zone_values, 1):
-            metrics[f'zone{i}_percent'] = value
+        for i, (name, value) in enumerate(zip(zone_names, zone_values)):
+            metrics[f'{name}_percent'] = value
+
+        # Generate movement speed data (realistic minutes that don't sum to 24 hours)
+        total_active_minutes = random.randint(30, 180)  # 30 minutes to 3 hours of movement
+        walking_pct = random.uniform(0.4, 0.7)
+        walking_fast_pct = random.uniform(0.15, 0.35)
+        jogging_pct = random.uniform(0.05, 0.25)
+        running_pct = max(0.01, 1 - walking_pct - walking_fast_pct - jogging_pct)
+
+        # Normalize percentages
+        total_pct = walking_pct + walking_fast_pct + jogging_pct + running_pct
+        walking_pct /= total_pct
+        walking_fast_pct /= total_pct
+        jogging_pct /= total_pct
+        running_pct /= total_pct
+
+        metrics['walking_minutes'] = int(total_active_minutes * walking_pct)
+        metrics['walking_fast_minutes'] = int(total_active_minutes * walking_fast_pct)
+        metrics['jogging_minutes'] = int(total_active_minutes * jogging_pct)
+        metrics['running_minutes'] = int(total_active_minutes * running_pct)
         
         # Save to database
         if save_health_metrics(engine, user_id, date, metrics):
@@ -598,20 +626,34 @@ def save_health_metrics(engine, user_id, date, metrics):
     # Then insert or update the heart rate zones
     upsert_zones_query = text("""
         INSERT INTO heart_rate_zones
-            (health_metric_id, zone1_percent, zone2_percent, zone3_percent, 
-             zone4_percent, zone5_percent, zone6_percent, zone7_percent)
+            (health_metric_id, very_light_percent, light_percent, moderate_percent, 
+            intense_percent, beast_mode_percent)
         VALUES
-            (:health_metric_id, :zone1_percent, :zone2_percent, :zone3_percent,
-             :zone4_percent, :zone5_percent, :zone6_percent, :zone7_percent)
+            (:health_metric_id, :very_light_percent, :light_percent, :moderate_percent,
+            :intense_percent, :beast_mode_percent)
         ON CONFLICT (health_metric_id)
         DO UPDATE SET
-            zone1_percent = :zone1_percent,
-            zone2_percent = :zone2_percent,
-            zone3_percent = :zone3_percent,
-            zone4_percent = :zone4_percent,
-            zone5_percent = :zone5_percent,
-            zone6_percent = :zone6_percent,
-            zone7_percent = :zone7_percent
+            very_light_percent = :very_light_percent,
+            light_percent = :light_percent,
+            moderate_percent = :moderate_percent,
+            intense_percent = :intense_percent,
+            beast_mode_percent = :beast_mode_percent
+    """)
+
+    # Insert or update movement speeds
+    upsert_movement_query = text("""
+        INSERT INTO movement_speeds
+            (health_metric_id, walking_minutes, walking_fast_minutes, 
+            jogging_minutes, running_minutes)
+        VALUES
+            (:health_metric_id, :walking_minutes, :walking_fast_minutes,
+            :jogging_minutes, :running_minutes)
+        ON CONFLICT (health_metric_id)
+        DO UPDATE SET
+            walking_minutes = :walking_minutes,
+            walking_fast_minutes = :walking_fast_minutes,
+            jogging_minutes = :jogging_minutes,
+            running_minutes = :running_minutes
     """)
     
     try:
@@ -638,18 +680,29 @@ def save_health_metrics(engine, user_id, date, metrics):
             health_metric_id = row[0]
             
             # Insert or update heart rate zones if provided
-            if all(f'zone{i}_percent' in metrics for i in range(1, 8)):
+            if all(f'{zone}_percent' in metrics for zone in ['very_light', 'light', 'moderate', 'intense', 'beast_mode']):
                 conn.execute(
                     upsert_zones_query,
                     {
                         "health_metric_id": health_metric_id,
-                        "zone1_percent": metrics.get('zone1_percent', 0),
-                        "zone2_percent": metrics.get('zone2_percent', 0),
-                        "zone3_percent": metrics.get('zone3_percent', 0),
-                        "zone4_percent": metrics.get('zone4_percent', 0),
-                        "zone5_percent": metrics.get('zone5_percent', 0),
-                        "zone6_percent": metrics.get('zone6_percent', 0),
-                        "zone7_percent": metrics.get('zone7_percent', 0)
+                        "very_light_percent": metrics.get('very_light_percent', 0),
+                        "light_percent": metrics.get('light_percent', 0),
+                        "moderate_percent": metrics.get('moderate_percent', 0),
+                        "intense_percent": metrics.get('intense_percent', 0),
+                        "beast_mode_percent": metrics.get('beast_mode_percent', 0)
+                    }
+                )
+
+            # Insert or update movement speeds if provided
+            if all(f'{activity}_minutes' in metrics for activity in ['walking', 'walking_fast', 'jogging', 'running']):
+                conn.execute(
+                    upsert_movement_query,
+                    {
+                        "health_metric_id": health_metric_id,
+                        "walking_minutes": metrics.get('walking_minutes', 0),
+                        "walking_fast_minutes": metrics.get('walking_fast_minutes', 0),
+                        "jogging_minutes": metrics.get('jogging_minutes', 0),
+                        "running_minutes": metrics.get('running_minutes', 0)
                     }
                 )
             

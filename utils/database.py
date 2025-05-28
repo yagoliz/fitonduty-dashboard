@@ -187,6 +187,36 @@ def get_all_groups():
     
     return group_list
 
+
+def get_user_latest_data_date(user_id):
+    """
+    Get the most recent date where the user has health data
+    
+    Args:
+        user_id: User ID
+        
+    Returns:
+        Date object of the most recent data, or None if no data exists
+    """
+    query = text("""
+        SELECT MAX(date) as latest_date
+        FROM health_metrics
+        WHERE user_id = :user_id
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {"user_id": user_id})
+            row = result.fetchone()
+            
+            if row and row[0]:
+                return row[0]
+            return None
+    except Exception as e:
+        print(f"Error getting latest data date for user {user_id}: {e}")
+        return None
+    
+
 def load_participant_data(user_id, start_date=None, end_date=None):
     """
     Load health data for a participant from the database
@@ -204,11 +234,12 @@ def load_participant_data(user_id, start_date=None, end_date=None):
         query = text("""
             SELECT 
                 hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
-                hrz.zone1_percent, hrz.zone2_percent, hrz.zone3_percent, 
-                hrz.zone4_percent, hrz.zone5_percent, hrz.zone6_percent, 
-                hrz.zone7_percent
+                hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
+                hrz.intense_percent, hrz.beast_mode_percent,
+                ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
             FROM health_metrics hm
             LEFT JOIN heart_rate_zones hrz ON hm.id = hrz.health_metric_id
+            LEFT JOIN movement_speeds ms ON hm.id = ms.health_metric_id
             WHERE hm.user_id = :user_id 
             AND hm.date BETWEEN :start_date AND :end_date
             ORDER BY hm.date
@@ -216,17 +247,18 @@ def load_participant_data(user_id, start_date=None, end_date=None):
         params = {
             "user_id": user_id,
             "start_date": start_date,
-            "end_date": end_date
+            "end_date": end_date,
         }
     elif start_date:
         query = text("""
             SELECT 
                 hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
-                hrz.zone1_percent, hrz.zone2_percent, hrz.zone3_percent, 
-                hrz.zone4_percent, hrz.zone5_percent, hrz.zone6_percent, 
-                hrz.zone7_percent
+                hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
+                hrz.intense_percent, hrz.beast_mode_percent,
+                ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
             FROM health_metrics hm
             LEFT JOIN heart_rate_zones hrz ON hm.id = hrz.health_metric_id
+            LEFT JOIN movement_speeds ms ON hm.id = ms.health_metric_id
             WHERE hm.user_id = :user_id 
             AND hm.date >= :start_date
             ORDER BY hm.date
@@ -239,11 +271,12 @@ def load_participant_data(user_id, start_date=None, end_date=None):
         query = text("""
             SELECT 
                 hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
-                hrz.zone1_percent, hrz.zone2_percent, hrz.zone3_percent, 
-                hrz.zone4_percent, hrz.zone5_percent, hrz.zone6_percent, 
-                hrz.zone7_percent
+                hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
+                hrz.intense_percent, hrz.beast_mode_percent,
+                ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
             FROM health_metrics hm
             LEFT JOIN heart_rate_zones hrz ON hm.id = hrz.health_metric_id
+            LEFT JOIN movement_speeds ms ON hm.id = ms.health_metric_id
             WHERE hm.user_id = :user_id 
             AND hm.date <= :end_date
             ORDER BY hm.date
@@ -259,11 +292,12 @@ def load_participant_data(user_id, start_date=None, end_date=None):
         query = text("""
             SELECT 
                 hm.date, hm.resting_hr, hm.max_hr, hm.sleep_hours, hm.hrv_rest,
-                hrz.zone1_percent, hrz.zone2_percent, hrz.zone3_percent, 
-                hrz.zone4_percent, hrz.zone5_percent, hrz.zone6_percent, 
-                hrz.zone7_percent
+                hrz.very_light_percent, hrz.light_percent, hrz.moderate_percent, 
+                hrz.intense_percent, hrz.beast_mode_percent,
+                ms.walking_minutes, ms.walking_fast_minutes, ms.jogging_minutes, ms.running_minutes
             FROM health_metrics hm
             LEFT JOIN heart_rate_zones hrz ON hm.id = hrz.health_metric_id
+            LEFT JOIN movement_speeds ms ON hm.id = ms.health_metric_id
             WHERE hm.user_id = :user_id 
             AND hm.date >= :thirty_days_ago
             ORDER BY hm.date

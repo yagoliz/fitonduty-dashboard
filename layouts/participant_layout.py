@@ -4,8 +4,9 @@ from dash import html, dcc, callback, callback_context, Input, Output, State
 import dash_bootstrap_components as dbc
 from flask_login import current_user
 
-# Import components
+# Import custom components
 from layouts.footer import create_footer
+from utils.database import get_user_latest_data_date
 
 def create_layout():
     """
@@ -23,8 +24,12 @@ def create_layout():
     # Get group information
     group = current_user.group if current_user.is_authenticated else None
     
-    # Set default dates
-    today = datetime(2025, 5, 1).date()
+    # Set default dates based on user's actual data
+    if current_user.is_authenticated:
+        latest_date = get_user_latest_data_date(current_user.id)
+        today = latest_date if latest_date else datetime.now().date()
+    else:
+        today = datetime.now().date()
     
     return html.Div([
         # Navigation bar - outside the container for full width
@@ -91,6 +96,10 @@ def create_layout():
                             className="date-input mb-3",
                         ),
                         html.P("View your health metrics for a specific day", className="text-muted small"),
+                        # Add info about data availability
+                        html.P(f"Showing data from your most recent available date: {today.strftime('%B %d, %Y')}" if current_user.is_authenticated else "", 
+                               className="text-info small", 
+                               id="data-availability-info"),
                     ], xs=12, md=4, className="mb-3"),
                     dbc.Col([
                         html.Div(id="daily-snapshot-container"),
@@ -140,11 +149,11 @@ def create_layout():
             ], className="mb-5"),
             
             # SECTION 4: DETAILED ANALYSIS (Uses same date range as health metrics)
-            html.Div([
-                html.H4("Detailed Analysis", className="section-title text-primary"),
-                html.P("Advanced charts based on your selected trend period", className="text-muted mb-3"),
-                html.Div(id="detailed-analysis-container"),
-            ], className="mb-5"),
+            # html.Div([
+            #     html.H4("Detailed Analysis", className="section-title text-primary"),
+            #     html.P("Advanced charts based on your selected trend period", className="text-muted mb-3"),
+            #     html.Div(id="detailed-analysis-container"),
+            # ], className="mb-5"),
             
             # Footer
             create_footer()
