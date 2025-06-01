@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 
 from utils.visualization import create_race_figure
 
-def create_participant_ranking(ranking_data, all_participants_data=None):
+def create_participant_ranking(ranking_data, all_participants_data=None, ranking_history_fig=None):
     """
     Create a component showing the participant's ranking within their group
     
@@ -37,49 +37,72 @@ def create_participant_ranking(ranking_data, all_participants_data=None):
         rank_color = "warning"
         rank_text = "It's not too late! Keep going! 🚀"
     
-    components = [
-        # Ranking Summary Card
-        dbc.Card([
-            dbc.CardHeader(html.H5("Your Data Consistency Ranking", className="card-title mb-0")),
-            dbc.CardBody([
-                html.Div([
-                    html.H2(
-                        f"{ranking_data['rank']}/{ranking_data['total_participants']}",
-                        className=f"text-{rank_color} text-center"
-                    ),
-                    html.P(rank_text, className="text-center mb-2"),
-                    
-                    dbc.Progress(
-                        value=rank_percentage,
-                        color=rank_color,
-                        className="mb-3",
-                        style={"height": "10px"}
-                    ),
-                    
+    components = []
+
+    # Create ranking card
+    components.append(
+        html.Div([
+            dbc.Card([
+                dbc.CardHeader(html.H5("Your Data Consistency Ranking", className="card-title mb-0")),
+                dbc.CardBody([
                     html.Div([
-                        html.P([
-                            "You've provided data for ",
-                            html.Strong(f"{ranking_data['days_with_data']} days!"),
-                        ], className="text-center mb-0")
+                        html.H2(
+                            f"{ranking_data['rank']}/{ranking_data['total_participants']}",
+                            className=f"text-{rank_color} text-center"
+                        ),
+                        html.P(rank_text, className="text-center mb-2"),
+                        
+                        dbc.Progress(
+                            value=rank_percentage,
+                            color=rank_color,
+                            className="mb-3",
+                            style={"height": "10px"}
+                        ),
+                        
+                        html.Div([
+                            html.P([
+                                "You've provided data for ",
+                                html.Strong(f"{ranking_data['days_with_data']} days!"),
+                            ], className="text-center mb-0")
+                        ])
                     ])
                 ])
-            ])
-        ], className="border-0 bg-light mb-3"),
-    ]
+            ], className="border-0 bg-light mb-3")
+        ])
+    )
     
     # Add race visualization if we have all participants data
     if all_participants_data:
         race_fig = create_race_figure(all_participants_data, ranking_data["participant_id"])
         components.append(
-            dbc.Card([
-                dbc.CardBody([
-                    dcc.Graph(
-                        figure=race_fig,
-                        config={'displayModeBar': False, 'responsive': True},
-                        style={'width': '100%', 'height': '100%'}
-                    )
-                ])
-            ], className="border-0 bg-light")
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            dcc.Graph(
+                                figure=race_fig,
+                                config={'displayModeBar': False, 'responsive': True},
+                                style={'width': '100%', 'height': '100%'}
+                            )
+                        ])
+                    ], className="border-0 bg-light", style={"min-height": "300px"}),
+                ]),
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Your Ranking History", className="card-title mb-0")),
+                        dbc.CardBody([
+                            dcc.Graph(
+                                figure=ranking_history_fig,
+                                config={'displayModeBar': False, 'responsive': True},
+                                style={'width': '100%', 'height': '100%'}
+                            ) if ranking_history_fig else html.Div(
+                                "Loading ranking history...", 
+                                className="text-center text-muted p-5"
+                            )
+                        ])
+                    ], className="border-0 bg-light mb-3 h-100",),
+                ], xs=12, md=6, style={"min-height": "300px"}) if ranking_history_fig is not None else html.Div(),
+            ])
         )
     
     return html.Div(components)

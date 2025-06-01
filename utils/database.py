@@ -1,10 +1,8 @@
-# utils/db_utils.py
+from datetime import datetime, timedelta
 import os
 import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import QueuePool
-from datetime import datetime, timedelta
-import numpy as np
 
 # Get database connection string from environment variable or use default for development
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://username:password@localhost:5432/dashboard')
@@ -18,6 +16,7 @@ engine = create_engine(
     pool_timeout=30,
     pool_recycle=3600  # Recycle connections after 1 hour
 )
+
 
 def get_user_by_id(user_id):
     """Get user by username from the database"""
@@ -40,6 +39,7 @@ def get_user_by_id(user_id):
         
     return user_dict
 
+
 def get_user_by_username(username):
     """Get user by username from the database"""
     query = text("""
@@ -61,6 +61,7 @@ def get_user_by_username(username):
         
     return user_dict
 
+
 def get_user_groups(user_id):
     """Get groups for a specific user"""
     query = text("""
@@ -81,6 +82,7 @@ def get_user_groups(user_id):
         
     return groups
 
+
 def update_last_login(user_id):
     """Update the last login timestamp for a user"""
     query = text("""
@@ -92,6 +94,7 @@ def update_last_login(user_id):
     with engine.connect() as conn:
         conn.execute(query, {"user_id": user_id})
         conn.commit()
+
 
 def create_session(user_id, session_token, ip_address, user_agent, expires_at):
     """Create a new session record"""
@@ -109,6 +112,7 @@ def create_session(user_id, session_token, ip_address, user_agent, expires_at):
             "expires_at": expires_at
         })
         conn.commit()
+
 
 def get_participants_by_group(group_id=None):
     """Get all participants grouped by their group"""
@@ -162,6 +166,7 @@ def get_participants_by_group(group_id=None):
         })
     
     return groups
+
 
 def get_all_groups():
     """Get list of all groups"""
@@ -389,6 +394,36 @@ def get_all_group_participants_ranking(user_id, start_date, end_date):
     except Exception as e:
         print(f"Error getting group participants ranking: {e}")
         return []
+    
+
+def get_group_historical_data(user_id, start_date, end_date):
+    """
+    Get historical data for all participants in the user's group
+    
+    Args:
+        user_id: User ID to determine the group
+        start_date: Start date for data range
+        end_date: End date for data range
+        
+    Returns:
+        DataFrame with historical data for ranking calculations
+    """
+    
+    query = text("""
+        SELECT * FROM get_group_historical_data(:user_id, :start_date, :end_date)
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            df = pd.read_sql(query, conn, params={
+                "user_id": user_id,
+                "start_date": start_date,
+                "end_date": end_date
+            })
+        return df
+    except Exception as e:
+        print(f"Error getting group historical data: {e}")
+        return pd.DataFrame()
     
 
 def load_anomaly_data(user_id, date=None, start_date=None, end_date=None):

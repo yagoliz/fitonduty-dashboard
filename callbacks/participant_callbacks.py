@@ -11,6 +11,7 @@ from utils.database import (
     load_participant_data,
     get_participant_ranking,
     get_all_group_participants_ranking,
+    get_group_historical_data,
 )
 from utils.visualization import (
     create_empty_chart,
@@ -18,6 +19,7 @@ from utils.visualization import (
     create_movement_speed_chart,
     create_step_count_trend_chart,
     create_step_count_summary,
+    create_ranking_over_time_figure,
 )
 
 # SECTION 1: RANKING - Uses whole dataset
@@ -49,11 +51,26 @@ def update_participant_ranking_whole_dataset(pathname):
         # Get all participants data for the race visualization
         all_participants_data = get_all_group_participants_ranking(user_id, far_past, far_future)
         
-        return create_participant_ranking(ranking_data, all_participants_data)
+        # Get historical data for ranking over time
+        # For performance, limit to last 6 months
+        history_end = datetime.now().date()
+        history_start = history_end - timedelta(days=180)
+        
+        df_history = get_group_historical_data(user_id, history_start, history_end)
+        
+        # Create ranking over time figure
+        ranking_history_fig = None
+        if not df_history.empty:
+            ranking_history_fig = create_ranking_over_time_figure(
+                user_id, 
+                df_history, 
+                interval='week'  # Weekly view for better granularity
+            )
+        
+        return create_participant_ranking(ranking_data, all_participants_data, ranking_history_fig)
 
     except Exception as e:
         return dbc.Alert(f"Error loading ranking data: {str(e)}", color="danger")
-
 
 # SECTION 2: DAILY SNAPSHOT - Single day
 @callback(
