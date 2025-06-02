@@ -67,7 +67,7 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
                         ])
                     ])
                 ])
-            ], className="border-0 bg-light mb-3")
+            ], className="mb-3")
         ])
     )
     
@@ -78,6 +78,7 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
             dbc.Row([
                 dbc.Col([
                     dbc.Card([
+                        dbc.CardHeader(html.H5("The Race 🏃", className="card-title mb-0")),
                         dbc.CardBody([
                             dcc.Graph(
                                 figure=race_fig,
@@ -85,7 +86,7 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
                                 style={'width': '100%', 'height': '100%'}
                             )
                         ])
-                    ], className="border-0 bg-light", style={"min-height": "300px"}),
+                    ], className="", style={"min-height": "300px"}),
                 ]),
                 dbc.Col([
                     dbc.Card([
@@ -100,7 +101,7 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
                                 className="text-center text-muted p-5"
                             )
                         ])
-                    ], className="border-0 bg-light mb-3 h-100",),
+                    ], className="mb-3 h-100",),
                 ], xs=12, md=6, style={"min-height": "300px"}) if ranking_history_fig is not None else html.Div(),
             ])
         )

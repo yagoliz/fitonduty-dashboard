@@ -82,11 +82,11 @@ def create_race_figure(participant_data, current_participant_id):
             x0=-0.05, x1=1.1,
             y0=y_pos, y1=y_pos,
             line=dict(
-                color="rgba(150, 150, 150, 0.3)",
+                color="white",
                 width=1,
-                dash="dash"
+                # dash="dash"
             ),
-            layer="below"
+            layer="between"
         )
     
     # Add trace for other participants
@@ -149,7 +149,7 @@ def create_race_figure(participant_data, current_participant_id):
         x0=0, x1=0,
         y0=-0.6, y1=0.6,
         line=dict(
-            color="gray",
+            color="white",
             width=2,
         )
     )
@@ -191,12 +191,13 @@ def create_race_figure(participant_data, current_participant_id):
     
     # Update layout
     fig.update_layout(
-        title=dict(
-            text="🏃 Your Position in the Data Consistency Race",
-            font=dict(size=18, weight=600),
-            x=0.5,
-            xanchor='center'
-        ),
+        # title=dict(
+        #     text="🏃 Your Position in the Data Consistency Race",
+        #     font=dict(size=18, weight=600),
+        #     x=0.5,
+        #     xanchor='center'
+        # ),
+        title="Your Data Consistency",
         xaxis=dict(
             title="Progress to Goal →",
             showticklabels=True,
@@ -215,7 +216,7 @@ def create_race_figure(participant_data, current_participant_id):
             range=[-0.8, 0.8]
         ),
         showlegend=False,
-        height=280,
+        height=None,
         margin=dict(l=20, r=20, t=50, b=60),
         plot_bgcolor='rgba(248, 249, 250, 0.3)',
         paper_bgcolor='rgba(0,0,0,0)',
@@ -227,7 +228,7 @@ def create_race_figure(participant_data, current_participant_id):
         type="rect",
         x0=-0.1, x1=1.15,
         y0=-0.6, y1=0.6,
-        fillcolor="rgba(200, 200, 200, 0.1)",
+        fillcolor="rgba(221, 17, 17, 0.4)",
         line=dict(width=0),
         layer="below"
     )

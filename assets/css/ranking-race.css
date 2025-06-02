@@ -1,5 +1,4 @@
 .race-visualization-card {
-    background: linear-gradient(135deg, rgba(0, 119, 182, 0.02) 0%, rgba(144, 224, 239, 0.02) 100%);
     border: 1px solid rgba(0, 119, 182, 0.1);
 }
 
@@ -55,7 +54,6 @@
 
 /* Ranking history card styling */
 .ranking-history-card {
-    background: linear-gradient(135deg, rgba(56, 176, 0, 0.02) 0%, rgba(76, 175, 80, 0.02) 100%);
     border: 1px solid rgba(76, 175, 80, 0.1);
 }
 
