@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from dash import callback, Input, Output, State, html, dcc
+from dash import callback, callback_context, Input, Output, State, html, dcc
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -9,6 +9,8 @@ from components.admin.group_comparison import create_group_comparison
 from components.admin.group_summary import create_group_summary
 from components.admin.participant_detail import create_participant_detail
 
+
+from utils.formatting import parse_and_format_date
 from utils.database import (
     get_participants_by_group,
     get_all_groups,
@@ -169,6 +171,133 @@ def update_participant_store(participant_id, show_all, group_id):
     return None
 
 
+@callback(
+    [Output("admin-date-range", "data"),
+     Output("custom-date-container", "style"),
+     Output("admin-btn-last-7-days", "color"),
+     Output("admin-btn-last-30-days", "color"),
+     Output("admin-btn-custom", "color")],
+    [Input("admin-btn-last-7-days", "n_clicks"),
+     Input("admin-btn-last-30-days", "n_clicks"),
+     Input("admin-btn-custom", "n_clicks"),
+     Input("admin-current-date", "date"),
+     Input("admin-custom-start-date", "date")],
+    [State("admin-date-range", "data")],
+    prevent_initial_call=True
+)
+def update_admin_date_range(n_last_7, n_last_30, n_custom, 
+                           current_date, custom_start_date, current_data):
+    """Update the date range based on button clicks or date changes"""
+    ctx = callback_context
+    
+    if not ctx.triggered:
+        return current_data, {"display": "none"}, "light", "light", "light", "light"
+    
+    trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    # Convert current_date to date object if it's a string
+    if isinstance(current_date, str):
+        current_date = datetime.strptime(current_date, "%Y-%m-%dT%H:%M:%S.%f").date()
+    
+    # Default button colors
+    btn_colors = {"last_7": "light", "last_30": "light", "this_month": "light", "custom": "light"}
+    custom_container_style = {"display": "none"}
+    
+    # Determine the mode and calculate dates
+    if trigger_id == "admin-btn-last-7-days":
+        mode = "last_7"
+        start_date = current_date - timedelta(days=6)
+        end_date = current_date
+        btn_colors["last_7"] = "primary"
+        
+    elif trigger_id == "admin-btn-last-30-days":
+        mode = "last_30"
+        start_date = current_date - timedelta(days=29)
+        end_date = current_date
+        btn_colors["last_30"] = "primary"
+        
+    elif trigger_id == "admin-btn-this-month":
+        mode = "this_month"
+        start_date = current_date.replace(day=1)
+        # Calculate end of month
+        if current_date.month == 12:
+            next_month = current_date.replace(year=current_date.year+1, month=1, day=1)
+        else:
+            next_month = current_date.replace(month=current_date.month+1, day=1)
+        end_date = min(current_date, next_month - timedelta(days=1))
+        btn_colors["this_month"] = "primary"
+        
+    elif trigger_id == "admin-btn-custom":
+        mode = "custom"
+        # Convert custom_start_date to date object if it's a string
+        if isinstance(custom_start_date, str):
+            custom_start_date = parse_and_format_date(custom_start_date)
+        start_date = custom_start_date
+        end_date = current_date
+        btn_colors["custom"] = "primary"
+        custom_container_style = {"display": "block"}
+        
+    elif trigger_id == "admin-current-date":
+        # Current date changed, recalculate based on current mode
+        current_mode = current_data.get("mode", "last_7")
+        
+        if current_mode == "last_7":
+            mode = "last_7"
+            start_date = current_date - timedelta(days=6)
+            end_date = current_date
+            btn_colors["last_7"] = "primary"
+            
+        elif current_mode == "last_30":
+            mode = "last_30"
+            start_date = current_date - timedelta(days=29)
+            end_date = current_date
+            btn_colors["last_30"] = "primary"
+            
+        elif current_mode == "custom":
+            mode = "custom"
+            if isinstance(custom_start_date, str):
+                custom_start_date = parse_and_format_date(custom_start_date)
+            start_date = custom_start_date
+            end_date = current_date
+            btn_colors["custom"] = "primary"
+            custom_container_style = {"display": "block"}
+            
+    elif trigger_id == "admin-custom-start-date":
+        # Custom start date changed, only applies if we're in custom mode
+        current_mode = current_data.get("mode", "last_7")
+        if current_mode == "custom":
+            mode = "custom"
+            if isinstance(custom_start_date, str):
+                custom_start_date = parse_and_format_date(custom_start_date)
+            start_date = custom_start_date
+            end_date = current_date
+            btn_colors["custom"] = "primary"
+            custom_container_style = {"display": "block"}
+        else:
+            # If not in custom mode, don't change anything
+            return current_data, custom_container_style, btn_colors["last_7"], btn_colors["last_30"], btn_colors["this_month"], btn_colors["custom"]
+    else:
+        # No change
+        current_mode = current_data.get("mode", "last_7")
+        btn_colors[current_mode] = "primary"
+        if current_mode == "custom":
+            custom_container_style = {"display": "block"}
+        return current_data, custom_container_style, btn_colors["last_7"], btn_colors["last_30"], btn_colors["this_month"], btn_colors["custom"]
+    
+    # Ensure start_date is not after end_date
+    if start_date > end_date:
+        start_date = end_date
+    
+    new_data = {
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "mode": mode
+    }
+    
+    return (new_data, custom_container_style, 
+            btn_colors["last_7"], btn_colors["last_30"], btn_colors["custom"])
+
+
 # Callback to update the selected view info
 @callback(
     Output("selected-view-info", "children"),
@@ -190,12 +319,12 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
         
         if start_date and end_date:
             start_str = (
-                datetime.strptime(start_date, "%Y-%m-%d").strftime("%b %d, %Y")
+                parse_and_format_date(start_date).strftime("%b %d, %Y")
                 if isinstance(start_date, str)
                 else start_date.strftime("%b %d, %Y")
             )
             end_str = (
-                datetime.strptime(end_date, "%Y-%m-%d").strftime("%b %d, %Y")
+                parse_and_format_date(start_date).strftime("%b %d, %Y")
                 if isinstance(end_date, str)
                 else end_date.strftime("%b %d, %Y")
             )
@@ -280,9 +409,9 @@ def update_data_visualizations(group_id, show_all, participant_id, date_range):
 
     # Convert string dates to datetime objects if needed
     if isinstance(start_date, str):
-        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+        start_date = parse_and_format_date(start_date)
     if isinstance(end_date, str):
-        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        end_date = parse_and_format_date(end_date)
 
     # If showing all participants
     if 1 in show_all:
@@ -482,8 +611,6 @@ def update_admin_anomaly_timeline(participant_id, date_range):
         if df.empty:
             empty_fig = create_empty_chart("No anomaly data available for the selected date")
             return html.Div("No anomaly data available"), empty_fig
-
-        print(f"DataFrame has {len(df)} rows")
 
         # Calculate summary statistics
         avg_score = df['score'].mean()
