@@ -9,16 +9,8 @@ from components.admin.group_comparison import create_group_comparison
 from components.admin.group_summary import create_group_summary
 from components.admin.participant_detail import create_participant_detail
 
-
 from utils.formatting import parse_and_format_date
-from utils.database import (
-    get_participants_by_group,
-    get_all_groups,
-    load_participant_data,
-    load_anomaly_data,
-    get_user_by_id,
-)
-
+from utils.database import get_all_groups, get_participants_by_group, get_user_by_id, get_user_latest_data_date, load_anomaly_data, load_participant_data
 from utils.visualization import create_empty_chart, create_anomaly_timeline, create_anomaly_heatmap
 
 @callback(
@@ -171,6 +163,7 @@ def update_participant_store(participant_id, show_all, group_id):
     return None
 
 
+# Call back to update the admin date range based on button clicks
 @callback(
     [Output("admin-date-range", "data"),
      Output("custom-date-container", "style"),
@@ -197,7 +190,7 @@ def update_admin_date_range(n_last_7, n_last_30, n_custom,
     
     # Convert current_date to date object if it's a string
     if isinstance(current_date, str):
-        current_date = datetime.strptime(current_date, "%Y-%m-%dT%H:%M:%S.%f").date()
+        current_date = parse_and_format_date(current_date)
     
     # Default button colors
     btn_colors = {"last_7": "light", "last_30": "light", "this_month": "light", "custom": "light"}
@@ -298,6 +291,58 @@ def update_admin_date_range(n_last_7, n_last_30, n_custom,
             btn_colors["last_7"], btn_colors["last_30"], btn_colors["custom"])
 
 
+# Callback to automatically update the current date based on selected participant
+@callback(
+    [Output("admin-current-date", "date", allow_duplicate=True),
+     Output("admin-date-range", "data", allow_duplicate=True)],
+    [Input("selected-participant-store", "data")],
+    [State("admin-date-range", "data")],
+    prevent_initial_call=True
+)
+def auto_update_date_for_participant(participant_id, current_date_range):
+    """Automatically update the current date to the participant's latest data date"""
+    if not participant_id:
+        raise PreventUpdate
+    
+    try:
+        # Get the participant's latest data date
+        latest_date = get_user_latest_data_date(participant_id)
+        
+        if latest_date:
+            # Get current mode from existing date range data
+            current_mode = current_date_range.get("mode", "last_7") if current_date_range else "last_7"
+            
+            # Calculate new start date based on current mode and latest date
+            if current_mode == "last_7":
+                start_date = latest_date - timedelta(days=6)
+            elif current_mode == "last_30":
+                start_date = latest_date - timedelta(days=29)
+            elif current_mode == "custom":
+                # For custom mode, keep the existing start date or default to 7 days back
+                if current_date_range and current_date_range.get("start_date"):
+                    start_date = parse_and_format_date(current_date_range["start_date"])
+                else:
+                    start_date = latest_date - timedelta(days=6)
+            else:
+                start_date = latest_date - timedelta(days=6)
+            
+            # Create new date range data
+            new_date_range = {
+                "start_date": start_date.isoformat(),
+                "end_date": latest_date.isoformat(),
+                "mode": current_mode
+            }
+            
+            return latest_date, new_date_range
+        else:
+            # If no data found, don't update
+            raise PreventUpdate
+            
+    except Exception as e:
+        print(f"Error auto-updating date for participant {participant_id}: {e}")
+        raise PreventUpdate
+
+
 # Callback to update the selected view info
 @callback(
     Output("selected-view-info", "children"),
@@ -324,7 +369,7 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
                 else start_date.strftime("%b %d, %Y")
             )
             end_str = (
-                parse_and_format_date(start_date).strftime("%b %d, %Y")
+                parse_and_format_date(end_date).strftime("%b %d, %Y")
                 if isinstance(end_date, str)
                 else end_date.strftime("%b %d, %Y")
             )
@@ -550,19 +595,9 @@ def create_participant_detail_data(participant_id, start_date, end_date, mode):
                 "No data available for the selected participant and date range"
             )
 
-        # For the summary cards, either use the most recent day or averages
-        if mode == "single":
-            # For single day view, use that day's data
-            df_single_day = df_history
-        else:
-            # For range views, create a summary row with averages
-            avg_row = {}
-            for col in df_history.columns:
-                if col not in ["date", "participant_id", "participant_name"]:
-                    avg_row[col] = df_history[col].mean()
-
-            # Create a single-row DataFrame with the averages
-            df_single_day = pd.DataFrame([avg_row])
+        # Get the data for the last day
+        last_day = parse_and_format_date(end_date) if isinstance(end_date, str) else end_date
+        df_single_day = df_history[df_history["date"] == last_day]
 
         # Get participant name if available
         try:

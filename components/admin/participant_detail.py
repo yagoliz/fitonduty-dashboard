@@ -16,7 +16,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
     """
     if df_single_day.empty:
         return html.Div([
-            dbc.Alert("No data available for the selected participant and date range", color="warning")
+            dbc.Alert("No data available for the selected participant and date", color="warning")
         ])
     
     title_prefix = f"{participant_name}'s" if participant_name else "Participant"
