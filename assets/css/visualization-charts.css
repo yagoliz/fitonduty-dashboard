@@ -49,29 +49,13 @@
 #admin-data-visualizations .card-body {
     display: flex;
     flex-direction: column;
-}
-
-#admin-data-visualizations .card-body .chart-container {
-    flex: 1;
-    min-height: 280px;
-    position: relative !important;
-}
-
-/* Add transition for smooth resize */
-.js-plotly-plot {
-    transition: width 0.3s ease, height 0.3s ease;
-}
-
-#admin-data-visualizations .card-body {
-    display: flex;
-    flex-direction: column;
     height: 100%;
 }
 
 #admin-data-visualizations .chart-wrapper {
     position: relative;
     width: 100%;
-    height: 300px;
+    height: 300px; /* Fixed height - don't change this */
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -87,10 +71,14 @@
     height: 100% !important;
 }
 
-/* Force admin charts to redraw when sidebar state changes */
-.sidebar-collapsed ~ #main-content-column #admin-data-visualizations .js-plotly-plot,
-.sidebar-collapsed ~ #main-content-column #admin-data-visualizations .plot-container {
+/* Let Plotly handle its own dimensions */
+#admin-data-visualizations .js-plotly-plot,
+#admin-data-visualizations .plot-container {
     width: 100% !important;
     height: 100% !important;
-    transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* Smooth transition for sidebar changes */
+.main-content-column {
+    transition: margin-left 0.3s ease, width 0.3s ease;
 }
