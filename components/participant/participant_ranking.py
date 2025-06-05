@@ -86,7 +86,7 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
                                 style={'width': '100%', 'height': '100%'}
                             )
                         ])
-                    ], className="", style={"min-height": "300px"}),
+                    ], className="", style={"minHeight": "300px"}),
                 ]),
                 dbc.Col([
                     dbc.Card([
@@ -102,7 +102,7 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
                             )
                         ])
                     ], className="mb-3 h-100",),
-                ], xs=12, md=6, style={"min-height": "300px"}) if ranking_history_fig is not None else html.Div(),
+                ], xs=12, md=6, style={"minHeight": "300px"}) if ranking_history_fig is not None else html.Div(),
             ])
         )
     

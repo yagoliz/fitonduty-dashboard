@@ -119,7 +119,7 @@ def update_daily_snapshot(selected_date):
                                     config={'displayModeBar': False, 'responsive': True},
                                     style={'width': '100%', 'height': '100%'}
                                 )
-                            ], className="chart-wrapper", style={"min-height": "350px"})
+                            ], className="chart-wrapper", style={"minHeight": "350px"})
                         ])
                     ])
                 ], xs=12, md=6, className="mb-4"),
@@ -136,7 +136,7 @@ def update_daily_snapshot(selected_date):
                                     config={'displayModeBar': False, 'responsive': True},
                                     style={'width': '100%', 'height': '100%'}
                                 )
-                            ], className="chart-wrapper", style={"min-height": "350px"})
+                            ], className="chart-wrapper", style={"minHeight": "350px"})
                         ])
                     ])
                 ], xs=12, md=6, className="mb-4"),

@@ -16,6 +16,7 @@ def create_heart_rate_trend_chart(df):
         mode="lines+markers",
         name="Resting HR",
         line=dict(color="#1976D2", width=2),
+        line_shape='spline',
         marker=dict(size=6),
     ))
     
@@ -25,6 +26,7 @@ def create_heart_rate_trend_chart(df):
         mode="lines+markers",
         name="Max HR",
         line=dict(color="#D32F2F", width=2, dash="dot"),
+        line_shape='spline',
         marker=dict(size=6),
     ))
     
@@ -57,6 +59,7 @@ def create_hrv_trend_chart(df):
         y=df["hrv_rest"],
         mode="lines+markers",
         line=dict(color="#673AB7", width=2),
+        line_shape='spline',
         marker=dict(size=6),
     ))
     
