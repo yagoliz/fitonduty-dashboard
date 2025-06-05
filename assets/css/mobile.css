@@ -1,3 +1,29 @@
+/* Preventing Safari Zoom */
+@media (max-width: 767.98px) {
+    /* Ensure all form inputs have minimum 16px font size to prevent zoom */
+    input[type="date"],
+    input[type="datetime-local"], 
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    select,
+    textarea,
+    .DateInput_input,
+    .date-input input {
+        font-size: 16px !important;
+        /* Disable zoom behavior */
+        touch-action: manipulation;
+    }
+    
+    /* Specifically target Dash date picker inputs */
+    .dash-date-picker input,
+    .SingleDatePickerInput input {
+        font-size: 16px !important;
+    }
+}
+
 /* Mobile behavior for sidebar */
 @media (max-width: 767.98px) {
     /* Define sidebar width variables for consistency */
