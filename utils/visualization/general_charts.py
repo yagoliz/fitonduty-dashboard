@@ -8,7 +8,6 @@ def create_group_bar_chart(df, x_col, y_col, title, y_label, color):
         x=df[x_col],
         y=df[y_col],
         marker_color=color,
-        text=df[y_col].round(1),
         textposition='auto'
     ))
     
@@ -37,7 +36,6 @@ def create_participant_bar_chart(df, x_col, y_cols, names, colors, title, y_labe
             y=grouped_df[y_col],
             name=names[i],
             marker_color=colors[i],
-            text=grouped_df[y_col].round(1),
             textposition='auto'
         ))
     

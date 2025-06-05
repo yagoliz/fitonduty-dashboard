@@ -2,6 +2,80 @@ import plotly.graph_objects as go
 
 from .empty import create_empty_chart
 
+
+def create_heart_rate_trend_chart(df):
+    """Create heart rate trend chart"""
+    if df.empty:
+        return create_empty_chart("No heart rate data available")
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=df["date"],
+        y=df["resting_hr"],
+        mode="lines+markers",
+        name="Resting HR",
+        line=dict(color="#1976D2", width=2),
+        marker=dict(size=6),
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=df["date"],
+        y=df["max_hr"],
+        mode="lines+markers",
+        name="Max HR",
+        line=dict(color="#D32F2F", width=2, dash="dot"),
+        marker=dict(size=6),
+    ))
+    
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=35),
+        autosize=True,
+        height=None,
+        template="plotly_white",
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+    )
+    
+    fig.update_xaxes(title_text="", tickformat="%b %d", tickangle=-45)
+    fig.update_yaxes(title_text="BPM")
+    
+    return fig
+
+
+def create_hrv_trend_chart(df):
+    """Create HRV trend chart"""
+    if df.empty:
+        return create_empty_chart("No HRV data available")
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=df["date"],
+        y=df["hrv_rest"],
+        mode="lines+markers",
+        line=dict(color="#673AB7", width=2),
+        marker=dict(size=6),
+    ))
+    
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=35),
+        autosize=True,
+        height=None,
+        template="plotly_white",
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+    )
+    
+    fig.update_xaxes(title_text="", tickformat="%b %d", tickangle=-45)
+    fig.update_yaxes(title_text="HRV (ms)")
+    
+    return fig
+
+
 def create_heart_rate_zones_chart(df, chart_type='doughnut'):
     """Create a chart showing heart rate zone distribution - can be doughnut or bar"""
     # Extract zone columns (updated for 5 zones)

@@ -4,9 +4,11 @@ from dash import callback, Input, Output, html, dcc
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from flask_login import current_user
-import plotly.graph_objects as go
 
+from components import create_daily_snapshot_card
+from components.participant.summaries import create_heart_rate_summary, create_hrv_summary, create_sleep_summary
 from components.participant.participant_ranking import create_participant_ranking
+
 from utils.database import (
     load_participant_data,
     get_participant_ranking,
@@ -14,13 +16,16 @@ from utils.database import (
     get_group_historical_data,
 )
 from utils.visualization import (
-    create_empty_chart,
+    create_heart_rate_trend_chart,
     create_heart_rate_zones_chart,
+    create_hrv_trend_chart,
     create_movement_speed_chart,
+    create_sleep_trend_chart,
     create_step_count_trend_chart,
     create_step_count_summary,
     create_ranking_over_time_figure,
 )
+
 
 # SECTION 1: RANKING - Uses whole dataset
 @callback(
@@ -72,6 +77,7 @@ def update_participant_ranking_whole_dataset(pathname):
     except Exception as e:
         return dbc.Alert(f"Error loading ranking data: {str(e)}", color="danger")
 
+
 # SECTION 2: DAILY SNAPSHOT - Single day
 @callback(
     Output("daily-snapshot-container", "children"),
@@ -96,105 +102,9 @@ def update_daily_snapshot(selected_date):
 
         # Create detailed snapshot with charts
         return html.Div([
-            # Summary Card
-            dbc.Card([
-                dbc.CardHeader([
-                    html.H5(f"Health Metrics for {selected_date}", className="mb-0"),
-                    html.P("Complete health overview for the selected day", className="text-muted small mb-0 mt-1")
-                ]),
-                dbc.CardBody([
-                    # Primary Metrics Row - Now includes Step Count
-                    dbc.Row([
-                        dbc.Col([
-                            html.Div([
-                                html.H3(f"{df['resting_hr'].iloc[0]:.0f}", className="text-primary text-center metric-value mb-1"),
-                                html.P("Resting HR", className="text-center small mb-0"),
-                                html.P("(bpm)", className="text-center text-muted extra-small"),
-                            ], className="metric-box")
-                        ], xs=6, md=2, className="mb-3"),
-                        
-                        dbc.Col([
-                            html.Div([
-                                html.H3(f"{df['max_hr'].iloc[0]:.0f}", className="text-danger text-center metric-value mb-1"),
-                                html.P("Max HR", className="text-center small mb-0"),
-                                html.P("(bpm)", className="text-center text-muted extra-small"),
-                            ], className="metric-box")
-                        ], xs=6, md=2, className="mb-3"),
-                        
-                        dbc.Col([
-                            html.Div([
-                                html.H3(f"{df['sleep_hours'].iloc[0]:.1f}", className="text-success text-center metric-value mb-1"),
-                                html.P("Sleep", className="text-center small mb-0"),
-                                html.P("(hours)", className="text-center text-muted extra-small"),
-                            ], className="metric-box")
-                        ], xs=6, md=2, className="mb-3"),
-                        
-                        dbc.Col([
-                            html.Div([
-                                html.H3(f"{df['hrv_rest'].iloc[0]:.0f}", className="text-info text-center metric-value mb-1"),
-                                html.P("HRV", className="text-center small mb-0"),
-                                html.P("(ms)", className="text-center text-muted extra-small"),
-                            ], className="metric-box")
-                        ], xs=6, md=2, className="mb-3"),
-                        
-                        # NEW: Step Count
-                        dbc.Col([
-                            html.Div([
-                                html.H3(f"{df['step_count'].iloc[0]:,}", className="text-warning text-center metric-value mb-1"),
-                                html.P("Steps", className="text-center small mb-0"),
-                                html.P("(count)", className="text-center text-muted extra-small"),
-                            ], className="metric-box")
-                        ], xs=12, md=2, className="mb-3"),
-                    ], className="g-3"),
-                    
-                    # Additional insights row - Updated to include step insights
-                    html.Hr(className="my-3"),
-                    dbc.Row([
-                        dbc.Col([
-                            html.Div([
-                                html.H6("Heart Rate Range", className="text-muted mb-2"),
-                                html.P(f"{df['max_hr'].iloc[0] - df['resting_hr'].iloc[0]:.0f} bpm", className="h5 mb-1"),
-                                html.Small("Difference between max and resting HR", className="text-muted")
-                            ])
-                        ], xs=12, md=3, className="mb-2"),
-                        
-                        dbc.Col([
-                            html.Div([
-                                html.H6("Sleep Quality", className="text-muted mb-2"),
-                                html.P(
-                                    "Good" if df['sleep_hours'].iloc[0] >= 7 else "Needs Improvement", 
-                                    className="h5 mb-1 text-success" if df['sleep_hours'].iloc[0] >= 7 else "h5 mb-1 text-warning"
-                                ),
-                                html.Small("Based on 7+ hours recommendation", className="text-muted")
-                            ])
-                        ], xs=12, md=3, className="mb-2"),
-                        
-                        dbc.Col([
-                            html.Div([
-                                html.H6("Recovery Status", className="text-muted mb-2"),
-                                html.P(
-                                    "Good" if df['hrv_rest'].iloc[0] >= 50 else "Monitor", 
-                                    className="h5 mb-1 text-success" if df['hrv_rest'].iloc[0] >= 50 else "h5 mb-1 text-info"
-                                ),
-                                html.Small("Based on HRV levels", className="text-muted")
-                            ])
-                        ], xs=12, md=3, className="mb-2"),
-                        
-                        # NEW: Step Goal Status
-                        dbc.Col([
-                            html.Div([
-                                html.H6("Step Goal", className="text-muted mb-2"),
-                                html.P(
-                                    "Achieved!" if df['step_count'].iloc[0] >= 10000 else f"{(df['step_count'].iloc[0] / 10000 * 100):.0f}% of Goal", 
-                                    className="h5 mb-1 text-success" if df['step_count'].iloc[0] >= 10000 else "h5 mb-1 text-warning"
-                                ),
-                                html.Small("Based on 10,000 steps/day", className="text-muted")
-                            ])
-                        ], xs=12, md=3, className="mb-2"),
-                    ])
-                ])
-            ], className="shadow-sm mb-4"),
-            
+            # Header for daily snapshot,
+            create_daily_snapshot_card(df, selected_date),
+
             # Charts Row
             dbc.Row([
                 # Heart Rate Zones Doughnut Chart
@@ -235,6 +145,7 @@ def update_daily_snapshot(selected_date):
 
     except Exception as e:
         return dbc.Alert(f"Error loading daily snapshot: {str(e)}", color="danger")
+
 
 # SECTION 3: HEALTH METRICS - Trends over period (Reorganized into 2 rows)
 @callback(
@@ -417,281 +328,3 @@ def update_data_availability_info(pathname):
     else:
         return "⚠️ No health data found for your account"
 
-# Helper functions for creating charts
-def create_heart_rate_trend_chart(df):
-    """Create heart rate trend chart"""
-    if df.empty:
-        return create_empty_chart("No heart rate data available")
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=df["date"],
-        y=df["resting_hr"],
-        mode="lines+markers",
-        name="Resting HR",
-        line=dict(color="#1976D2", width=2),
-        marker=dict(size=6),
-    ))
-    
-    fig.add_trace(go.Scatter(
-        x=df["date"],
-        y=df["max_hr"],
-        mode="lines+markers",
-        name="Max HR",
-        line=dict(color="#D32F2F", width=2, dash="dot"),
-        marker=dict(size=6),
-    ))
-    
-    fig.update_layout(
-        margin=dict(l=10, r=10, t=10, b=35),
-        autosize=True,
-        height=None,
-        template="plotly_white",
-        showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-    )
-    
-    fig.update_xaxes(title_text="", tickformat="%b %d", tickangle=-45)
-    fig.update_yaxes(title_text="BPM")
-    
-    return fig
-
-
-def create_sleep_trend_chart(df):
-    """Create sleep trend chart"""
-    if df.empty:
-        return create_empty_chart("No sleep data available")
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        x=df["date"],
-        y=df["sleep_hours"],
-        marker_color="#4CAF50",
-        text=df["sleep_hours"].round(1),
-        textposition="outside",
-    ))
-    
-    # Add recommended sleep range
-    fig.add_shape(
-        type="rect",
-        x0=df["date"].min(),
-        x1=df["date"].max(),
-        y0=7,
-        y1=9,
-        fillcolor="rgba(0,200,0,0.1)",
-        line=dict(width=0),
-        layer="below",
-    )
-    
-    fig.update_layout(
-        margin=dict(l=10, r=10, t=10, b=35),
-        height=None,
-        template="plotly_white",
-        showlegend=False,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-    )
-    
-    fig.update_xaxes(title_text="", tickformat="%b %d", tickangle=-45)
-    fig.update_yaxes(title_text="Hours", range=[0, max(10, df["sleep_hours"].max() * 1.1)])
-    
-    return fig
-
-
-def create_hrv_trend_chart(df):
-    """Create HRV trend chart"""
-    if df.empty:
-        return create_empty_chart("No HRV data available")
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=df["date"],
-        y=df["hrv_rest"],
-        mode="lines+markers",
-        line=dict(color="#673AB7", width=2),
-        marker=dict(size=6),
-    ))
-    
-    fig.update_layout(
-        margin=dict(l=10, r=10, t=10, b=35),
-        autosize=True,
-        height=None,
-        template="plotly_white",
-        showlegend=False,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-    )
-    
-    fig.update_xaxes(title_text="", tickformat="%b %d", tickangle=-45)
-    fig.update_yaxes(title_text="HRV (ms)")
-    
-    return fig
-
-
-# Summary functions for health metrics
-def create_heart_rate_summary(df):
-    """Create heart rate summary statistics"""
-    if df.empty:
-        return html.Div("No data available")
-    
-    avg_resting_hr = df["resting_hr"].mean()
-    max_hr = df["max_hr"].max()
-    min_hr = df["resting_hr"].min()
-    
-    return html.Div([
-        dbc.Row([
-            dbc.Col([
-                html.H3(f"{avg_resting_hr:.0f}", className="text-primary text-center"),
-                html.P("Avg Resting HR", className="text-muted text-center small"),
-            ], width=4),
-            dbc.Col([
-                html.H3(f"{max_hr:.0f}", className="text-danger text-center"),
-                html.P("Max HR", className="text-muted text-center small"),
-            ], width=4),
-            dbc.Col([
-                html.H3(f"{min_hr:.0f}", className="text-success text-center"),
-                html.P("Min HR", className="text-muted text-center small"),
-            ], width=4),
-        ])
-    ])
-
-
-def create_sleep_summary(df):
-    """Create sleep summary statistics"""
-    if df.empty:
-        return html.Div("No data available")
-    
-    avg_sleep = df["sleep_hours"].mean()
-    min_sleep = df["sleep_hours"].min()
-    max_sleep = df["sleep_hours"].max()
-    
-    return html.Div([
-        dbc.Row([
-            dbc.Col([
-                html.H3(f"{avg_sleep:.1f}", className="text-primary text-center"),
-                html.P("Avg Hours", className="text-muted text-center small"),
-            ], width=4),
-            dbc.Col([
-                html.H3(f"{min_sleep:.1f}", className="text-danger text-center"),
-                html.P("Min Hours", className="text-muted text-center small"),
-            ], width=4),
-            dbc.Col([
-                html.H3(f"{max_sleep:.1f}", className="text-success text-center"),
-                html.P("Max Hours", className="text-muted text-center small"),
-            ], width=4),
-        ])
-    ])
-
-
-def create_hrv_summary(df):
-    """Create HRV summary statistics"""
-    if df.empty:
-        return html.Div("No data available")
-    
-    avg_hrv = df["hrv_rest"].mean()
-    
-    # Calculate trend if we have at least 2 data points
-    if len(df) > 1:
-        first_val = df.iloc[0]["hrv_rest"]
-        last_val = df.iloc[-1]["hrv_rest"]
-        trend = last_val - first_val
-        trend_pct = (trend / first_val) * 100 if first_val > 0 else 0
-    else:
-        trend = 0
-        trend_pct = 0
-    
-    trend_color = "text-success" if trend > 0 else "text-danger"
-    trend_icon = "↑" if trend > 0 else "↓"
-    
-    return html.Div([
-        dbc.Row([
-            dbc.Col([
-                html.H3(f"{avg_hrv:.0f}", className="text-primary text-center"),
-                html.P("Avg HRV (ms)", className="text-muted text-center small"),
-            ], width=6),
-            dbc.Col([
-                html.H3([f"{trend_icon} {abs(trend_pct):.1f}%"], className=f"{trend_color} text-center"),
-                html.P("Trend", className="text-muted text-center small"),
-            ], width=6),
-        ])
-    ])
-
-
-def create_period_health_summary(df):
-    """Create a comprehensive health summary for the period"""
-    if df.empty:
-        return html.Div("No data available")
-    
-    # Calculate various statistics
-    days_count = len(df)
-    avg_resting_hr = df["resting_hr"].mean()
-    avg_sleep = df["sleep_hours"].mean()
-    avg_hrv = df["hrv_rest"].mean()
-    
-    # Sleep quality assessment
-    good_sleep_days = (df["sleep_hours"] >= 7).sum()
-    sleep_quality_pct = (good_sleep_days / days_count) * 100
-    
-    # HRV consistency (how stable it is)
-    hrv_std = df["hrv_rest"].std()
-    hrv_consistency = "High" if hrv_std < 10 else "Moderate" if hrv_std < 20 else "Variable"
-    
-    # Heart rate recovery (difference between max and resting)
-    avg_hr_range = (df["max_hr"] - df["resting_hr"]).mean()
-    
-    return html.Div([
-        # Period Overview
-        html.H6("Period Overview", className="text-primary mb-3"),
-        html.Div([
-            html.Strong(f"{days_count} days"), " of data analyzed"
-        ], className="mb-3"),
-        
-        # Key Metrics
-        html.H6("Key Metrics", className="text-primary mb-2"),
-        html.Div([
-            html.Div([
-                html.Strong(f"{avg_resting_hr:.0f} bpm"),
-                html.Br(),
-                html.Small("Avg Resting HR", className="text-muted")
-            ], className="mb-2"),
-            
-            html.Div([
-                html.Strong(f"{avg_sleep:.1f} hrs"),
-                html.Br(),
-                html.Small("Avg Sleep", className="text-muted")
-            ], className="mb-2"),
-            
-            html.Div([
-                html.Strong(f"{avg_hrv:.0f} ms"),
-                html.Br(),
-                html.Small("Avg HRV", className="text-muted")
-            ], className="mb-3"),
-        ]),
-        
-        # Health Insights
-        html.H6("Health Insights", className="text-primary mb-2"),
-        html.Div([
-            html.Div([
-                f"{sleep_quality_pct:.0f}% good sleep days",
-                html.Br(),
-                html.Small("(7+ hours)", className="text-muted")
-            ], className="mb-2"),
-            
-            html.Div([
-                f"HRV consistency: {hrv_consistency}",
-                html.Br(),
-                html.Small(f"Std dev: {hrv_std:.1f}", className="text-muted")
-            ], className="mb-2"),
-            
-            html.Div([
-                f"Avg HR range: {avg_hr_range:.0f} bpm",
-                html.Br(),
-                html.Small("Max - Resting", className="text-muted")
-            ], className="mb-2"),
-        ])
-    ])

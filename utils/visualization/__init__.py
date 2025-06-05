@@ -5,3 +5,4 @@ from .heart_charts import * # noqa: F403
 from .movement_charts import *  # noqa: F403
 from .ranking_charts import * # noqa: F403
 from .step_charts import * # noqa: F403
+from .sleep_charts import * # noqa: F403

@@ -1,16 +1,9 @@
-# layouts/admin_layout.py
 from dash import html, dcc
-import dash_bootstrap_components as dbc
-from flask_login import current_user
-from datetime import datetime
 
-# Import modular components
 from components.admin.sidebar import create_admin_sidebar
-from components.admin.group_comparison import create_group_comparison
-from components.admin.group_summary import create_group_summary
-from components.admin.participant_detail import create_participant_detail
 from components.footer import create_footer
 
+# Admin Dashboard Layout
 def create_layout():
     """
     Create the admin dashboard layout with full-height sidebar and no navbar
@@ -18,7 +11,7 @@ def create_layout():
     Returns:
         A dash component with the admin dashboard
     """
-    # Complete admin layout with full-height sidebar and no navbar
+
     return html.Div([
         # Main container with sidebar and content
         html.Div([
@@ -52,7 +45,7 @@ def create_layout():
                 className="sidebar-toggle-container",
             ),
             
-            # Main content area - KEEP ID CONSISTENT WITH CALLBACKS 
+            # Main content area
             html.Div([
                 # Main content with title but no navbar
                 html.Div([
@@ -72,7 +65,7 @@ def create_layout():
                 # Footer
                 create_footer()
             ],
-            id="main-content-column",  # Keep this ID as it's used in callbacks
+            id="main-content-column",
             className="main-content-column",
             ),
         ],

@@ -1,6 +1,8 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from utils.visualization import create_history_line_chart, create_heart_rate_zones_chart
+
+from components import create_daily_snapshot_card
+from utils.visualization import create_history_line_chart, create_heart_rate_zones_chart, create_sleep_trend_chart, create_step_count_trend_chart
 
 def create_participant_detail(df_single_day, df_history, participant_name=None):
     """
@@ -22,59 +24,39 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
     title_prefix = f"{participant_name}'s" if participant_name else "Participant"
     
     return html.Div([
-        # Summary cards
-        dbc.Row([
-            # Heart rate card
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4(f"{df_single_day['resting_hr'].iloc[0]:.0f}", className="card-title text-center text-primary"),
-                        html.P("Resting Heart Rate (bpm)", className="card-text text-center"),
+        # Daily Summary
+        html.Div([
+            dbc.Row([
+                dbc.Col([
+                    create_daily_snapshot_card(df_single_day, df_single_day['date'].iloc[0])
+                ], width=12, lg=6, className="mb-4"),
+                
+                # Heart Rate Zones Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5(f"{title_prefix} Heart Rate Zones", className="card-title")),
+                        dbc.CardBody([
+                            html.Div([
+                                dcc.Graph(
+                                    id="admin-heart-rate-zones-chart",
+                                    figure=create_heart_rate_zones_chart(df_single_day),
+                                    config={
+                                        'displayModeBar': False,
+                                        'responsive': True
+                                    },
+                                    style={
+                                        'width': '100%',
+                                        'height': '100%'
+                                    }
+                                )
+                            ], className="chart-wrapper", style={"height": "300px"})
+                        ])
                     ])
-                ], color="light", outline=True)
-            ], className="mb-5"),
-
-            # Max HR card
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4(f"{df_single_day['max_hr'].iloc[0]:.0f}", className="card-title text-center text-danger"),
-                        html.P("Max Heart Rate (bpm)", className="card-text text-center"),
-                    ])
-                ], color="light", outline=True)
-            ], className="mb-5"),
-            
-            # Sleep card
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4(f"{df_single_day['sleep_hours'].iloc[0]:.1f}", className="card-title text-center text-success"),
-                        html.P("Sleep Hours", className="card-text text-center"),
-                    ])
-                ], color="light", outline=True)
-            ], className="mb-5"),
-            
-            # HRV card
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4(f"{df_single_day['hrv_rest'].iloc[0]:.0f}", className="card-title text-center text-info"),
-                        html.P("HRV (ms)", className="card-text text-center"),
-                    ])
-                ], color="light", outline=True)
-            ], className="mb-5"),
-
-            # Step count card
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4(f"{df_single_day['step_count'].iloc[0]:.0f}", className="card-title text-center text-warning"),
-                        html.P("Steps ", className="card-text text-center"),
-                    ])
-                ], color="light", outline=True)
-            ], className="mb-5"),
+                ], width=12, lg=6, className="mb-4")
+            ])
         ]),
 
+        # Anomalies
         html.Div([
             html.H4(f"{title_prefix} Anomaly Detection Results", className="mb-3"),
             dbc.Row([
@@ -127,7 +109,9 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
             ])
         ], className="anomaly-analysis mb-4"),
         
+        # Historical Summary
         html.H4(f"{title_prefix} Health Activity", className="mb-3"),
+
         # Historical charts
         dbc.Row([
             # Heart rate history
@@ -154,42 +138,10 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                             )
                         ], className="chart-wrapper", style={"height": "300px"})
                     ])
-                ])
-            ], width=12, lg=6, className="mb-4"),
-            
-            # Sleep history
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.H5(f"{title_prefix} Sleep History", className="card-title")),
-                    dbc.CardBody([
-                        html.Div([
-                            dcc.Graph(
-                                figure=create_history_line_chart(
-                                    df_history,
-                                    ['sleep_hours'],
-                                    ['Sleep Hours'],
-                                    ['#4CAF50'],
-                                    'Sleep Hours History',
-                                    'hours',
-                                    add_range=True,
-                                    range_min=7,
-                                    range_max=9
-                                ),
-                                config={
-                                    'displayModeBar': False,
-                                    'responsive': True
-                                },
-                                className="chart-container",
-                                style={"height": "100%", "width": "100%"}
-                            )
-                        ], className="chart-wrapper", style={"height": "300px"})
-                    ])
-                ])
-            ], width=12, lg=6, className="mb-4"),
-        ]),
-        
-        dbc.Row([
-            # HRV history
+                ]),
+            ], width=12, lg=6, className="mb-4"),    
+
+            # HRV History
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader(html.H5(f"{title_prefix} HRV History", className="card-title")),
@@ -214,16 +166,42 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                         ], className="chart-wrapper", style={"height": "300px"})
                     ])
                 ])
-            ], width=12, lg=6, className="mb-4"),
-            
-            # Heart rate zones
+            ], width=12, lg=6, className="mb-4"), 
+        ]),
+        
+        dbc.Row([
+            # Sleep Chart
             dbc.Col([
                 dbc.Card([
-                    dbc.CardHeader(html.H5(f"{title_prefix} Heart Rate Zones", className="card-title")),
+                    dbc.CardHeader(html.H5(f"{title_prefix} Sleep History", className="card-title")),
                     dbc.CardBody([
                         html.Div([
                             dcc.Graph(
-                                figure=create_heart_rate_zones_chart(df_single_day),
+                                figure=create_sleep_trend_chart(
+                                    df_history,
+                                ),
+                                config={
+                                    'displayModeBar': False,
+                                    'responsive': True
+                                },
+                                className="chart-container",
+                                style={"height": "100%", "width": "100%"}
+                            )
+                        ], className="chart-wrapper", style={"height": "300px"})
+                    ])
+                ])
+            ], width=12, lg=6, className="mb-4"),
+            
+            # Step Count Chart
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader(html.H5(f"{title_prefix} Step Count History", className="card-title")),
+                    dbc.CardBody([
+                        html.Div([
+                            dcc.Graph(
+                                figure=create_step_count_trend_chart(
+                                    df_history,
+                                ),
                                 config={
                                     'displayModeBar': False,
                                     'responsive': True

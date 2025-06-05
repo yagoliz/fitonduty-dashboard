@@ -52,16 +52,16 @@ def create_step_count_trend_chart(df):
         x=df["date"],
         y=df["step_count"],
         marker_color=df["step_count"].apply(lambda x: "#4CAF50" if x >= 10000 else "#FFA726"),
-        text=df["step_count"].apply(lambda x: f"{x:,}"),
         textposition="outside",
-        hovertemplate='<b>Date:</b> %{x}<br><b>Steps:</b> %{text}<extra></extra>',
+        hovertemplate='<b>Date:</b> %{x}<br><b>Steps:</b> %{y}<extra></extra>',
     ))
     
     # Add goal line at 10,000 steps
     fig.add_shape(
         type="line",
-        x0=df["date"].min(),
-        x1=df["date"].max(),
+        xref="paper",
+        x0=0,
+        x1=1,
         y0=10000,
         y1=10000,
         line=dict(color="red", width=2, dash="dash"),
