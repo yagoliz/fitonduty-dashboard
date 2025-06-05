@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 from components import create_daily_snapshot_card
-from utils.visualization import create_history_line_chart, create_heart_rate_zones_chart, create_sleep_trend_chart, create_step_count_trend_chart
+from utils.visualization import create_heart_rate_trend_chart, create_hrv_trend_chart, create_heart_rate_zones_chart, create_sleep_trend_chart, create_step_count_trend_chart
 
 def create_participant_detail(df_single_day, df_history, participant_name=None):
     """
@@ -121,14 +121,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                     dbc.CardBody([
                         html.Div([
                             dcc.Graph(
-                                figure=create_history_line_chart(
-                                    df_history,
-                                    ['resting_hr', 'max_hr'],
-                                    ['Resting HR', 'Max HR'],
-                                    ['#1976D2', '#D32F2F'],
-                                    'Heart Rate History',
-                                    'bpm'
-                                ),
+                                figure=create_heart_rate_trend_chart(df_history),
                                 config={
                                     'displayModeBar': False,
                                     'responsive': True
@@ -148,14 +141,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                     dbc.CardBody([
                         html.Div([
                             dcc.Graph(
-                                figure=create_history_line_chart(
-                                    df_history,
-                                    ['hrv_rest'],
-                                    ['HRV'],
-                                    ['#673AB7'],
-                                    'Heart Rate Variability History',
-                                    'ms'
-                                ),
+                                figure=create_hrv_trend_chart(df_history),
                                 config={
                                     'displayModeBar': False,
                                     'responsive': True
