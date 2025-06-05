@@ -105,7 +105,7 @@ def create_heart_rate_zones_chart(df, chart_type='doughnut'):
     }
     
     # Create color gradient from light to intense
-    colors = ["#E8F5E8", "#90EE90", "#FFD700", "#FF8C00", "#FF4500"]
+    colors = ["#ffe3e3", "#ffa8a8", "#ff6b6b", "#f03e3e", "#c92a2a"]    
     
     # Create chart
     fig = go.Figure()
@@ -115,6 +115,8 @@ def create_heart_rate_zones_chart(df, chart_type='doughnut'):
         fig.add_trace(go.Pie(
             labels=zone_labels,
             values=zone_data,
+            direction='clockwise',
+            sort=False,
             hole=0.4,
             marker=dict(colors=colors, line=dict(color='#FFFFFF', width=2)),
             textinfo='label+percent',
