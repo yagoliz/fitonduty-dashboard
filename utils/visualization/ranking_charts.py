@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-def create_race_figure(participant_data, current_participant_id):
+def create_race_figure(participant_data: dict, current_participant_id: int) -> go.Figure:
     """
     Create a race-style visualization showing participant's position among peers
     

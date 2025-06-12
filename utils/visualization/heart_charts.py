@@ -1,9 +1,10 @@
+import pandas as pd
 import plotly.graph_objects as go
 
 from .empty import create_empty_chart
 
 
-def create_heart_rate_trend_chart(df):
+def create_heart_rate_trend_chart(df: pd.DataFrame) -> go.Figure:
     """Create heart rate trend chart"""
     if df.empty:
         return create_empty_chart("No heart rate data available")
@@ -47,7 +48,7 @@ def create_heart_rate_trend_chart(df):
     return fig
 
 
-def create_hrv_trend_chart(df):
+def create_hrv_trend_chart(df: pd.DataFrame) -> go.Figure:
     """Create HRV trend chart"""
     if df.empty:
         return create_empty_chart("No HRV data available")
@@ -79,7 +80,7 @@ def create_hrv_trend_chart(df):
     return fig
 
 
-def create_heart_rate_zones_chart(df, chart_type='doughnut'):
+def create_heart_rate_zones_chart(df: pd.DataFrame, chart_type: str = 'doughnut') -> go.Figure:
     """Create a chart showing heart rate zone distribution - can be doughnut or bar"""
     # Extract zone columns (updated for 5 zones)
     zone_cols = ['very_light_percent', 'light_percent', 'moderate_percent', 'intense_percent', 'beast_mode_percent']

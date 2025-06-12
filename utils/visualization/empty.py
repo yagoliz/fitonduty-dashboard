@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 
-def create_empty_chart(message):
+def create_empty_chart(message: str) -> go.Figure:
     """
     Create an empty chart with a message
     

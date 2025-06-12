@@ -1,8 +1,9 @@
+import pandas as pd
 import plotly.graph_objects as go
 
 from .empty import create_empty_chart
 
-def create_movement_speed_chart(df):
+def create_movement_speed_chart(df: pd.DataFrame) -> go.Figure:
     """Create a bar chart showing movement speed distribution"""
     # Extract movement columns
     movement_cols = ['walking_minutes', 'walking_fast_minutes', 'jogging_minutes', 'running_minutes']
