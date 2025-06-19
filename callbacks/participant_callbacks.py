@@ -58,10 +58,10 @@ def update_participant_ranking_whole_dataset(pathname):
         
         # Get historical data for ranking over time
         # For performance, limit to last 6 months
-        history_end = datetime.now().date()
-        history_start = history_end - timedelta(days=180)
+        # history_end = datetime.now().date()
+        # history_start = history_end - timedelta(days=180)
         
-        df_history = get_group_historical_data(user_id, history_start, history_end)
+        df_history = get_group_historical_data(user_id, far_past, far_future)
         
         # Create ranking over time figure
         ranking_history_fig = None
@@ -99,6 +99,20 @@ def update_daily_snapshot(selected_date):
                 f"No data available for {selected_date}",
                 color="warning"
             )
+        
+        # Fill NaN values with 0 for metrics that may not be present
+        for col in [
+            "resting_hr",
+            "max_hr",
+            "hrv_rest",
+            "sleep_hours",
+            "step_count",
+            "walking_minutes",
+            "walking_fast_minutes",
+            "jogging_minutes",
+            "running_minutes",
+        ]:
+            df[col] = df[col].astype(float).fillna(0)
 
         # Create detailed snapshot with charts
         return html.Div([
