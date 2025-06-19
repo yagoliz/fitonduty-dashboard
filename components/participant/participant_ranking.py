@@ -14,11 +14,14 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
     Returns:
         A dash component showing the ranking information
     """
-    if not ranking_data:
-        return html.Div(
-            dbc.Alert("Ranking information not available", color="warning"),
-            className="mb-3"
-        )
+    
+    # Format data size for display
+    data_volume_mb = ranking_data.get("data_volume_mb", 0)
+    if data_volume_mb >= 1:
+        data_size_display = f"{data_volume_mb:.1f} MB"
+    else:
+        data_volume_kb = data_volume_mb * 1024
+        data_size_display = f"{data_volume_kb:.1f} KB"
     
     # Calculate percentage for progress bar
     rank_percentage = (1 - ((ranking_data["rank"] - 1) / ranking_data["total_participants"])) * 100 if ranking_data["total_participants"] > 1 else 100
@@ -61,8 +64,8 @@ def create_participant_ranking(ranking_data, all_participants_data=None, ranking
                         
                         html.Div([
                             html.P([
-                                "You've provided data for ",
-                                html.Strong(f"{ranking_data['days_with_data']} days!"),
+                                "You've provided a total of ",
+                               html.Strong(f"{data_size_display}"),
                             ], className="text-center mb-0")
                         ])
                     ])

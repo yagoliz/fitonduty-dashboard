@@ -21,19 +21,19 @@ def create_race_figure(participant_data: dict, current_participant_id: int) -> g
     
     for p in participant_data:
         if p['participant_id'] == current_participant_id:
-            participant_volume = p['days_with_data']
+            participant_volume = float(p.get('data_volume_mb', 0))
             participant_username = p.get('username', 'You')
         else:
             volumes.append({
-                'volume': p['days_with_data'],
+                'data_size': float(p.get('data_volume_mb', 0)),
                 'username': p.get('username', f"Participant {p['participant_id']}")
             })
     
     # Sort other participants by volume
-    volumes.sort(key=lambda x: x['volume'], reverse=True)
+    volumes.sort(key=lambda x: x['data_size'], reverse=True)
     
     # Extract just the volumes for normalization
-    vol_values = [v['volume'] for v in volumes]
+    vol_values = [v['data_size'] for v in volumes]
     
     # Convert to numpy arrays
     vol = np.array(vol_values) if vol_values else np.array([])
@@ -109,6 +109,7 @@ def create_race_figure(participant_data: dict, current_participant_id: int) -> g
             ),
             # text=hover_texts,
             # hovertemplate='%{text}<extra></extra>',
+            hoverinfo="skip",
             showlegend=False
         ))
     
@@ -430,7 +431,7 @@ def create_ranking_trend_summary(ranking_history):
     
     # Calculate best and worst ranks
     best_rank = min(r['rank'] for r in ranking_history)
-    worst_rank = max(r['rank'] for r in ranking_history)
+    # worst_rank = max(r['rank'] for r in ranking_history)
     
     from dash import html
     import dash_bootstrap_components as dbc
