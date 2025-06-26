@@ -16,26 +16,26 @@ def create_step_count_summary(df):
     # Calculate days meeting goal
     goal_days = (df["step_count"] >= 10000).sum()
     total_days = len(df)
-    goal_percentage = (goal_days / total_days * 100) if total_days > 0 else 0
+    # goal_percentage = (goal_days / total_days * 100) if total_days > 0 else 0
     
     return html.Div([
         dbc.Row([
             dbc.Col([
                 html.H3(f"{avg_steps:,.0f}", className="text-primary text-center"),
                 html.P("Avg Steps", className="text-muted text-center small"),
-            ], width=3),
+            ], width=4),
             dbc.Col([
                 html.H3(f"{max_steps:,}", className="text-success text-center"),
                 html.P("Best Day", className="text-muted text-center small"),
-            ], width=3),
+            ], width=4),
             dbc.Col([
                 html.H3(f"{min_steps:,}", className="text-danger text-center"),
                 html.P("Least Active", className="text-muted text-center small"),
-            ], width=3),
-            dbc.Col([
-                html.H3(f"{goal_percentage:.0f}%", className="text-warning text-center"),
-                html.P("Goal Days", className="text-muted text-center small"),
-            ], width=3),
+            ], width=4),
+            # dbc.Col([
+            #     html.H3(f"{goal_percentage:.0f}%", className="text-warning text-center"),
+            #     html.P("Goal Days", className="text-muted text-center small"),
+            # ], width=3),
         ])
     ])
 
@@ -56,26 +56,26 @@ def create_step_count_trend_chart(df):
         hovertemplate='<b>Date:</b> %{x}<br><b>Steps:</b> %{y}<extra></extra>',
     ))
     
-    # Add goal line at 10,000 steps
-    fig.add_shape(
-        type="line",
-        xref="paper",
-        x0=0,
-        x1=1,
-        y0=10000,
-        y1=10000,
-        line=dict(color="red", width=2, dash="dash"),
-    )
+    # # Add goal line at 10,000 steps
+    # fig.add_shape(
+    #     type="line",
+    #     xref="paper",
+    #     x0=0,
+    #     x1=1,
+    #     y0=10000,
+    #     y1=10000,
+    #     line=dict(color="red", width=2, dash="dash"),
+    # )
     
-    fig.add_annotation(
-        x=df["date"].max(),
-        y=10000,
-        text="Goal: 10,000",
-        showarrow=False,
-        yshift=10,
-        xshift=-20,
-        font=dict(size=10, color="red")
-    )
+    # fig.add_annotation(
+    #     x=df["date"].max(),
+    #     y=10000,
+    #     text="Goal: 10,000",
+    #     showarrow=False,
+    #     yshift=10,
+    #     xshift=-20,
+    #     font=dict(size=10, color="red")
+    # )
     
     fig.update_layout(
         margin=dict(l=10, r=10, t=10, b=35),

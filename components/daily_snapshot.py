@@ -76,7 +76,7 @@ def create_daily_snapshot_card(df: pd.DataFrame, selected_date: str) -> dbc.Card
                 
                 dbc.Col([
                     html.Div([
-                        html.H6("Sleep Quality", className="text-muted mb-2"),
+                        html.H6("Sleep Quantity", className="text-muted mb-2"),
                         html.P(
                             "Good" if df['sleep_hours'].iloc[0] >= 7 else "Needs Improvement", 
                             className="h5 mb-1 text-success" if df['sleep_hours'].iloc[0] >= 7 else "h5 mb-1 text-warning"
@@ -98,9 +98,9 @@ def create_daily_snapshot_card(df: pd.DataFrame, selected_date: str) -> dbc.Card
                 
                 dbc.Col([
                     html.Div([
-                        html.H6("Step Goal", className="text-muted mb-2"),
+                        html.H6("Activity Status", className="text-muted mb-2"),
                         html.P(
-                            "Achieved!" if df['step_count'].iloc[0] >= 10000 else f"{(df['step_count'].iloc[0] / 10000 * 100):.0f}% of Goal", 
+                            "Active" if df['step_count'].iloc[0] >= 10000 else "Regular", 
                             className="h5 mb-1 text-success" if df['step_count'].iloc[0] >= 10000 else "h5 mb-1 text-warning"
                         ),
                         html.Small("Based on 10,000 steps/day", className="text-muted")
