@@ -143,25 +143,25 @@ def _create_questionnaire_section(questionnaire_df: pd.DataFrame, has_questionna
         if pd.isna(value):
             return "text-muted"
         if reverse:  # For fatigue - lower is better
-            return "text-success" if value <= 3 else "text-warning" if value <= 6 else "text-danger"
+            return "text-success" if value <= 30 else "text-warning" if value <= 60 else "text-danger"
         else:  # For sleep quality and motivation - higher is better
-            return "text-danger" if value <= 3 else "text-warning" if value <= 6 else "text-success"
+            return "text-danger" if value <= 30 else "text-warning" if value <= 60 else "text-success"
     
     def get_quality_text(value, metric_type):
         if pd.isna(value):
             return "No data"
         
         if metric_type == "fatigue":
-            if value <= 3: 
+            if value <= 30: 
                 return "Low"
-            elif value <= 6: 
+            elif value <= 60: 
                 return "Moderate" 
             else: 
                 return "High"
         else:  # sleep_quality, motivation
-            if value <= 3: 
+            if value <= 30: 
                 return "Poor"
-            elif value <= 6: 
+            elif value <= 60: 
                 return "Fair"
             else: 
                 return "Good"
