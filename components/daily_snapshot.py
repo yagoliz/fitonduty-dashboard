@@ -171,7 +171,7 @@ def _create_questionnaire_section(questionnaire_df: pd.DataFrame, has_questionna
         dbc.Col([
             html.Div([
                 html.H3(
-                    f"{q_data['perceived_sleep_quality']:.0f}/10" if pd.notna(q_data['perceived_sleep_quality']) else "—", 
+                    f"{q_data['perceived_sleep_quality']:.0f}/100" if pd.notna(q_data['perceived_sleep_quality']) else "—", 
                     className=f"{get_quality_color(q_data['perceived_sleep_quality'])} text-center metric-value mb-1"
                 ),
                 html.P("Sleep Quality", className="text-center small mb-0"),
@@ -183,7 +183,7 @@ def _create_questionnaire_section(questionnaire_df: pd.DataFrame, has_questionna
         dbc.Col([
             html.Div([
                 html.H3(
-                    f"{q_data['fatigue_level']:.0f}/10" if pd.notna(q_data['fatigue_level']) else "—", 
+                    f"{q_data['fatigue_level']:.0f}/100" if pd.notna(q_data['fatigue_level']) else "—", 
                     className=f"{get_quality_color(q_data['fatigue_level'], reverse=True)} text-center metric-value mb-1"
                 ),
                 html.P("Fatigue Level", className="text-center small mb-0"),
@@ -195,7 +195,7 @@ def _create_questionnaire_section(questionnaire_df: pd.DataFrame, has_questionna
         dbc.Col([
             html.Div([
                 html.H3(
-                    f"{q_data['motivation_level']:.0f}/10" if pd.notna(q_data['motivation_level']) else "—", 
+                    f"{q_data['motivation_level']:.0f}/100" if pd.notna(q_data['motivation_level']) else "—", 
                     className=f"{get_quality_color(q_data['motivation_level'])} text-center metric-value mb-1"
                 ),
                 html.P("Motivation", className="text-center small mb-0"),
