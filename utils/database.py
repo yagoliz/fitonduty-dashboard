@@ -496,3 +496,86 @@ def load_anomaly_data(user_id, date=None, start_date=None, end_date=None):
     except Exception as e:
         print(f"Error loading anomaly data: {e}")
         return pd.DataFrame()
+    
+
+def load_questionnaire_data(user_id, start_date=None, end_date=None):
+    """
+    Load questionnaire data for a participant from the database
+    
+    Args:
+        user_id: User ID
+        start_date: Start date for data range (optional)
+        end_date: End date for data range (optional)
+        
+    Returns:
+        Pandas DataFrame with questionnaire data
+    """
+    # Build the query based on date parameters
+    if start_date and end_date:
+        query = text("""
+            SELECT 
+                qd.date, qd.perceived_sleep_quality, qd.fatigue_level, 
+                qd.motivation_level, qd.created_at
+            FROM questionnaire_data qd
+            WHERE qd.user_id = :user_id 
+            AND qd.date BETWEEN :start_date AND :end_date
+            ORDER BY qd.date
+        """)
+        params = {
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+    elif start_date:
+        query = text("""
+            SELECT 
+                qd.date, qd.perceived_sleep_quality, qd.fatigue_level, 
+                qd.motivation_level, qd.created_at
+            FROM questionnaire_data qd
+            WHERE qd.user_id = :user_id 
+            AND qd.date >= :start_date
+            ORDER BY qd.date
+        """)
+        params = {
+            "user_id": user_id,
+            "start_date": start_date
+        }
+    elif end_date:
+        query = text("""
+            SELECT 
+                qd.date, qd.perceived_sleep_quality, qd.fatigue_level, 
+                qd.motivation_level, qd.created_at
+            FROM questionnaire_data qd
+            WHERE qd.user_id = :user_id 
+            AND qd.date <= :end_date
+            ORDER BY qd.date
+        """)
+        params = {
+            "user_id": user_id,
+            "end_date": end_date
+        }
+    else:
+        # If no dates provided, get last 30 days
+        today = datetime.now().date()
+        thirty_days_ago = today - timedelta(days=30)
+        query = text("""
+            SELECT 
+                qd.date, qd.perceived_sleep_quality, qd.fatigue_level, 
+                qd.motivation_level, qd.created_at
+            FROM questionnaire_data qd
+            WHERE qd.user_id = :user_id 
+            AND qd.date >= :thirty_days_ago
+            ORDER BY qd.date
+        """)
+        params = {
+            "user_id": user_id,
+            "thirty_days_ago": thirty_days_ago
+        }
+    
+    try:
+        with engine.connect() as conn:
+            df = pd.read_sql(query, conn, params=params)
+        return df
+    except Exception as e:
+        print(f"Error loading questionnaire data from database: {e}")
+        return pd.DataFrame()  # Return empty dataframe on error

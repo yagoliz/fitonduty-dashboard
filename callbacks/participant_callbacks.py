@@ -5,12 +5,15 @@ import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from flask_login import current_user
 
+import pandas as pd
+
 from components import create_daily_snapshot_card
 from components.participant.summaries import create_heart_rate_summary, create_hrv_summary, create_sleep_summary
 from components.participant.participant_ranking import create_participant_ranking
 
 from utils.database import (
     load_participant_data,
+    load_questionnaire_data,
     get_participant_ranking,
     get_all_group_participants_ranking,
     get_group_historical_data,
@@ -91,14 +94,26 @@ def update_daily_snapshot(selected_date):
     user_id = current_user.id
 
     try:
-        # Load data for just this single day
+        # Load health data for just this single day
         df = load_participant_data(user_id, selected_date, selected_date)
+        
+        # Load questionnaire data for this day
+        questionnaire_df = load_questionnaire_data(user_id, selected_date, selected_date)
 
         if df.empty:
-            return dbc.Alert(
-                f"No data available for {selected_date}",
-                color="warning"
-            )
+            # Create empty state if no health data is available
+            df = pd.DataFrame({
+                "date": [selected_date],
+                "resting_hr": [None],
+                "max_hr": [None],
+                "hrv_rest": [None],
+                "sleep_hours": [None],
+                "step_count": [None],
+                "walking_minutes": [None],
+                "walking_fast_minutes": [None],
+                "jogging_minutes": [None],
+                "running_minutes": [None],
+            })
         
         # Fill NaN values with 0 for metrics that may not be present
         for col in [
@@ -114,12 +129,12 @@ def update_daily_snapshot(selected_date):
         ]:
             df[col] = df[col].astype(float).fillna(0)
 
-        # Create detailed snapshot with charts
+        # Create detailed snapshot with charts (updated to include questionnaire data)
         return html.Div([
-            # Header for daily snapshot,
-            create_daily_snapshot_card(df, selected_date),
+            # Header for daily snapshot - now includes both health and questionnaire data
+            create_daily_snapshot_card(df, questionnaire_df, selected_date),
 
-            # Charts Row
+            # Charts Row (existing charts remain the same)
             dbc.Row([
                 # Heart Rate Zones Doughnut Chart
                 dbc.Col([
@@ -257,7 +272,7 @@ def update_health_metrics_trends(date_range_data):
                     ])
                 ], xs=12, lg=6, className="mb-4"),
                 
-                # NEW: Step Count Card
+                # Step Count Card
                 dbc.Col([
                     dbc.Card([
                         dbc.CardHeader(html.H5("Daily Steps", className="card-title mb-0")),

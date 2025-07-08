@@ -83,6 +83,53 @@
     margin-bottom: 1rem;
 }
 
+/* Questionnaire section styling */
+.section-subtitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--secondary);
+    border-left: 4px solid var(--primary);
+    padding-left: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Enhanced questionnaire metric boxes */
+.metric-box {
+    transition: all var(--transition-fast);
+}
+
+.metric-box:hover {
+    background-color: rgba(248, 249, 250, 1);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+/* Questionnaire-specific colors */
+.text-questionnaire-good {
+    color: #28a745 !important;
+}
+
+.text-questionnaire-fair {
+    color: #ffc107 !important;
+}
+
+.text-questionnaire-poor {
+    color: #dc3545 !important;
+}
+
+/* Section dividers */
+.section-subtitle::before {
+    content: '';
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* Alert styling for missing questionnaire data */
+.alert-warning {
+    border-left: 4px solid #ffc107;
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
 /* Enhance metric box styling for 5 columns on desktop */
 @media (min-width: 768px) {
     .metric-box {
