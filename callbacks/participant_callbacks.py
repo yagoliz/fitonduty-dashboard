@@ -221,16 +221,12 @@ def update_health_metrics_trends(date_range_data):
         questionnaire_df = load_questionnaire_data(user_id, start_date, end_date)
 
         if df.empty:
-            return dbc.Alert(
+            health_data = (dbc.Alert(
                 "No health data available for the selected period",
                 color="warning"
-            )
-
-        # Create the health metrics component with charts reorganized into 3 rows
-        return html.Div([
-            # Row 1: Heart Rate and HRV
-            html.H5("Cardiovascular Metrics", className="section-subtitle mb-3"),
-            dbc.Row([
+            ))
+        else:
+            health_data = (dbc.Row([
                 # Heart Rate Card
                 dbc.Col([
                     dbc.Card([
@@ -318,7 +314,13 @@ def update_health_metrics_trends(date_range_data):
                         ])
                     ])
                 ], xs=12, lg=6, className="mb-4"),
-            ]),
+            ]))
+
+        # Create the health metrics component with charts reorganized into 3 rows
+        return html.Div([
+            # Row 1: Heart Rate and HRV
+            html.H5("Cardiovascular Metrics", className="section-subtitle mb-3"),
+            *health_data,
             
             # Row 3: Questionnaire Data (NEW)
             html.H5("Subjective Assessment Metrics", className="section-subtitle mb-3 mt-4"),
