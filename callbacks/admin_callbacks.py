@@ -10,8 +10,20 @@ from components.admin.group_summary import create_group_summary
 from components.admin.participant_detail import create_participant_detail
 
 from utils.formatting import parse_and_format_date
-from utils.database import get_all_groups, get_participants_by_group, get_user_by_id, get_user_latest_data_date, load_anomaly_data, load_participant_data
-from utils.visualization import create_empty_chart, create_anomaly_timeline, create_anomaly_heatmap
+from utils.database import (
+    get_all_groups,
+    get_participants_by_group,
+    get_user_by_id,
+    get_user_latest_data_date,
+    load_anomaly_data,
+    load_participant_data,
+    load_questionnaire_data,
+)
+from utils.visualization import (
+    create_empty_chart,
+    create_anomaly_timeline,
+    create_anomaly_heatmap,
+)
 
 @callback(
     [Output("sidebar-column", "className"),
@@ -590,6 +602,9 @@ def create_participant_detail_data(participant_id, start_date, end_date, mode):
         # Load participant data
         df_history = load_participant_data(participant_id, start_date, end_date)
 
+        # Load questionnaire data if available
+        questionnaire_df_history = load_questionnaire_data(participant_id, start_date, end_date)
+
         if df_history.empty:
             return html.Div(
                 "No data available for the selected participant and date range"
@@ -598,6 +613,7 @@ def create_participant_detail_data(participant_id, start_date, end_date, mode):
         # Get the data for the last day
         last_day = parse_and_format_date(end_date) if isinstance(end_date, str) else end_date
         df_single_day = df_history[df_history["date"] == last_day]
+        questionnaire_df_single_day = questionnaire_df_history[questionnaire_df_history["date"] == last_day]
 
         # Get participant name if available
         try:
@@ -608,7 +624,13 @@ def create_participant_detail_data(participant_id, start_date, end_date, mode):
             participant_name = None
 
         # Create visualizations
-        return create_participant_detail(df_single_day, df_history, participant_name)
+        return create_participant_detail(
+            df_single_day,
+            df_history,
+            questionnaire_df_single_day,
+            questionnaire_df_history,
+            participant_name,
+        )
     except Exception as e:
         print(f"Error creating participant detail visualizations: {e}")
         return html.Div(

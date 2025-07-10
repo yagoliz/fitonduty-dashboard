@@ -1,10 +1,20 @@
+from datetime import datetime
+
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 from components import create_daily_snapshot_card
-from utils.visualization import create_heart_rate_trend_chart, create_hrv_trend_chart, create_heart_rate_zones_chart, create_sleep_trend_chart, create_step_count_trend_chart
+from utils.visualization import (
+    create_heart_rate_trend_chart,
+    create_hrv_trend_chart,
+    create_heart_rate_zones_chart,
+    create_sleep_trend_chart,
+    create_step_count_trend_chart,
+    create_fatigue_motivation_trend_chart,
+    create_sleep_quality_trend_chart,
+)
 
-def create_participant_detail(df_single_day, df_history, participant_name=None):
+def create_participant_detail(df_single_day, df_history, questionnaire_df, questionnaire_df_history, participant_name=None):
     """
     Create visualizations for a single participant
     
@@ -28,7 +38,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
         html.Div([
             dbc.Row([
                 dbc.Col([
-                    create_daily_snapshot_card(df_single_day, df_single_day['date'].iloc[0])
+                    create_daily_snapshot_card(df_single_day, questionnaire_df, df_single_day['date'].iloc[0])
                 ], width=12, lg=6, className="mb-4"),
                 
                 # Heart Rate Zones Chart
@@ -58,7 +68,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
 
         # Anomalies
         html.Div([
-            html.H4(f"{title_prefix} Anomaly Detection Results", className="mb-3"),
+            html.H4(f"{title_prefix} Anomaly Detection Results", className="section-title mb-3"),
             dbc.Row([
                 # Daily anomaly timeline
                 dbc.Col([
@@ -110,7 +120,7 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
         ], className="anomaly-analysis mb-4"),
         
         # Historical Summary
-        html.H4(f"{title_prefix} Health Activity", className="mb-3"),
+        html.H4(f"{title_prefix} Health Activity", className="section-title mb-3"),
 
         # Historical charts
         dbc.Row([
@@ -200,4 +210,48 @@ def create_participant_detail(df_single_day, df_history, participant_name=None):
                 ])
             ], width=12, lg=6, className="mb-4"),
         ]),
+
+        # Questionnaire Data
+        html.H4(f"{title_prefix} Questionnaire Data", className="section-subtitle mb-3"),
+        dbc.Row([
+            # Sleep Quality Card
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Perceived Sleep Quality", className="card-title mb-0")),
+                        dbc.CardBody([
+                            html.Div([
+                                dcc.Graph(
+                                    figure=create_sleep_quality_trend_chart(questionnaire_df_history),
+                                    className="chart-container",
+                                    config={'displayModeBar': False, 'responsive': True},
+                                    style={'width': '100%', 'height': '100%'}
+                                )
+                            ], className="chart-wrapper")
+                        ])
+                    ])
+                ], xs=12, lg=6, className="mb-4"),
+                
+                # Fatigue & Motivation Card
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Fatigue & Motivation Levels", className="card-title mb-0")),
+                        dbc.CardBody([
+                            # Info text
+                            html.Div([
+                                html.P("Fatigue: Lower is better • Motivation: Higher is better", 
+                                      className="text-muted small text-center mb-2")
+                            ], className="metrics-summary"),
+                            html.Div([
+                                dcc.Graph(
+                                    figure=create_fatigue_motivation_trend_chart(questionnaire_df_history),
+                                    className="chart-container",
+                                    config={'displayModeBar': False, 'responsive': True},
+                                    style={'width': '100%', 'height': '100%'}
+                                )
+                            ], className="chart-wrapper")
+                        ])
+                    ])
+                ], xs=12, lg=6, className="mb-4"),
+        ])
+
     ])
