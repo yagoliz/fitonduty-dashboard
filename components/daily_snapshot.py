@@ -13,6 +13,102 @@ def create_daily_snapshot_card(df: pd.DataFrame, questionnaire_df: pd.DataFrame,
     Returns:
         A Dash component representing the daily snapshot card
     """
+
+    # If df is empty, create empty cards
+    if df.empty:
+        health_summary = html.Div([
+            dbc.Alert("No health metrics data available for this date.", color="warning", className="mb-3"),
+        ])
+
+        insights = html.Div([
+            dbc.Alert("No health metrics data available for this date.", color="warning", className="mb-3"),
+        ])
+
+    else:
+        health_summary = dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H3(f"{df['resting_hr'].iloc[0]:.0f}", className="text-primary text-center metric-value mb-1"),
+                    html.P("Resting HR", className="text-center small mb-0"),
+                    html.P("(bpm)", className="text-center text-muted extra-small"),
+                ], className="metric-box")
+            ], xs=6, md=2, className="mb-3"),
+            
+            dbc.Col([
+                html.Div([
+                    html.H3(f"{df['max_hr'].iloc[0]:.0f}", className="text-danger text-center metric-value mb-1"),
+                    html.P("Max HR", className="text-center small mb-0"),
+                    html.P("(bpm)", className="text-center text-muted extra-small"),
+                ], className="metric-box")
+            ], xs=6, md=2, className="mb-3"),
+            
+            dbc.Col([
+                html.Div([
+                    html.H3(f"{df['sleep_hours'].iloc[0]:.1f}", className="text-success text-center metric-value mb-1"),
+                    html.P("Sleep", className="text-center small mb-0"),
+                    html.P("(hours)", className="text-center text-muted extra-small"),
+                ], className="metric-box")
+            ], xs=6, md=2, className="mb-3"),
+            
+            dbc.Col([
+                html.Div([
+                    html.H3(f"{df['hrv_rest'].iloc[0]:.0f}", className="text-info text-center metric-value mb-1"),
+                    html.P("HRV", className="text-center small mb-0"),
+                    html.P("(ms)", className="text-center text-muted extra-small"),
+                ], className="metric-box")
+            ], xs=6, md=2, className="mb-3"),
+            
+            dbc.Col([
+                html.Div([
+                    html.H3(f"{df['step_count'].iloc[0]:,}", className="text-warning text-center metric-value mb-1"),
+                    html.P("Steps", className="text-center small mb-0"),
+                    html.P("(count)", className="text-center text-muted extra-small"),
+                ], className="metric-box")
+            ], xs=12, md=2, className="mb-3"),
+        ], className="g-3")
+
+        insights = dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H6("Heart Rate Range", className="text-muted mb-2"),
+                    html.P(f"{df['max_hr'].iloc[0] - df['resting_hr'].iloc[0]:.0f} bpm", className="h5 mb-1"),
+                    html.Small("Difference between max and resting HR", className="text-muted")
+                ])
+            ], xs=12, md=3, className="mb-2"),
+            
+            dbc.Col([
+                html.Div([
+                    html.H6("Sleep Quantity", className="text-muted mb-2"),
+                    html.P(
+                        "Good" if df['sleep_hours'].iloc[0] >= 7 else "Needs Improvement", 
+                        className="h5 mb-1 text-success" if df['sleep_hours'].iloc[0] >= 7 else "h5 mb-1 text-warning"
+                    ),
+                    html.Small("Based on 7+ hours recommendation", className="text-muted")
+                ])
+            ], xs=12, md=3, className="mb-2"),
+            
+            dbc.Col([
+                html.Div([
+                    html.H6("Recovery Status", className="text-muted mb-2"),
+                    html.P(
+                        "Good" if df['hrv_rest'].iloc[0] >= 50 else "Monitor", 
+                        className="h5 mb-1 text-success" if df['hrv_rest'].iloc[0] >= 50 else "h5 mb-1 text-info"
+                    ),
+                    html.Small("Based on HRV levels", className="text-muted")
+                ])
+            ], xs=12, md=3, className="mb-2"),
+            
+            dbc.Col([
+                html.Div([
+                    html.H6("Activity Status", className="text-muted mb-2"),
+                    html.P(
+                        "Active" if df['step_count'].iloc[0] >= 10000 else "Regular", 
+                        className="h5 mb-1 text-success" if df['step_count'].iloc[0] >= 10000 else "h5 mb-1 text-warning"
+                    ),
+                    html.Small("Based on 10,000 steps/day", className="text-muted")
+                ])
+            ], xs=12, md=3, className="mb-2"),
+        ])
     
     # Check if we have questionnaire data for this date
     has_questionnaire = not questionnaire_df.empty and len(questionnaire_df) > 0
@@ -25,49 +121,7 @@ def create_daily_snapshot_card(df: pd.DataFrame, questionnaire_df: pd.DataFrame,
         dbc.CardBody([
             # Health Metrics Section
             html.H6("📊 Objective Metrics", className="section-subtitle mb-3"),
-            
-            # Primary Metrics Row - Health Data
-            dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.H3(f"{df['resting_hr'].iloc[0]:.0f}", className="text-primary text-center metric-value mb-1"),
-                        html.P("Resting HR", className="text-center small mb-0"),
-                        html.P("(bpm)", className="text-center text-muted extra-small"),
-                    ], className="metric-box")
-                ], xs=6, md=2, className="mb-3"),
-                
-                dbc.Col([
-                    html.Div([
-                        html.H3(f"{df['max_hr'].iloc[0]:.0f}", className="text-danger text-center metric-value mb-1"),
-                        html.P("Max HR", className="text-center small mb-0"),
-                        html.P("(bpm)", className="text-center text-muted extra-small"),
-                    ], className="metric-box")
-                ], xs=6, md=2, className="mb-3"),
-                
-                dbc.Col([
-                    html.Div([
-                        html.H3(f"{df['sleep_hours'].iloc[0]:.1f}", className="text-success text-center metric-value mb-1"),
-                        html.P("Sleep", className="text-center small mb-0"),
-                        html.P("(hours)", className="text-center text-muted extra-small"),
-                    ], className="metric-box")
-                ], xs=6, md=2, className="mb-3"),
-                
-                dbc.Col([
-                    html.Div([
-                        html.H3(f"{df['hrv_rest'].iloc[0]:.0f}", className="text-info text-center metric-value mb-1"),
-                        html.P("HRV", className="text-center small mb-0"),
-                        html.P("(ms)", className="text-center text-muted extra-small"),
-                    ], className="metric-box")
-                ], xs=6, md=2, className="mb-3"),
-                
-                dbc.Col([
-                    html.Div([
-                        html.H3(f"{df['step_count'].iloc[0]:,}", className="text-warning text-center metric-value mb-1"),
-                        html.P("Steps", className="text-center small mb-0"),
-                        html.P("(count)", className="text-center text-muted extra-small"),
-                    ], className="metric-box")
-                ], xs=12, md=2, className="mb-3"),
-            ], className="g-3"),
+            health_summary,
             
             # Questionnaire Section
             html.Hr(className="my-4"),
@@ -78,48 +132,8 @@ def create_daily_snapshot_card(df: pd.DataFrame, questionnaire_df: pd.DataFrame,
             
             # Additional insights row - Updated to include questionnaire insights
             html.Hr(className="my-3"),
-            dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.H6("Heart Rate Range", className="text-muted mb-2"),
-                        html.P(f"{df['max_hr'].iloc[0] - df['resting_hr'].iloc[0]:.0f} bpm", className="h5 mb-1"),
-                        html.Small("Difference between max and resting HR", className="text-muted")
-                    ])
-                ], xs=12, md=3, className="mb-2"),
-                
-                dbc.Col([
-                    html.Div([
-                        html.H6("Sleep Quantity", className="text-muted mb-2"),
-                        html.P(
-                            "Good" if df['sleep_hours'].iloc[0] >= 7 else "Needs Improvement", 
-                            className="h5 mb-1 text-success" if df['sleep_hours'].iloc[0] >= 7 else "h5 mb-1 text-warning"
-                        ),
-                        html.Small("Based on 7+ hours recommendation", className="text-muted")
-                    ])
-                ], xs=12, md=3, className="mb-2"),
-                
-                dbc.Col([
-                    html.Div([
-                        html.H6("Recovery Status", className="text-muted mb-2"),
-                        html.P(
-                            "Good" if df['hrv_rest'].iloc[0] >= 50 else "Monitor", 
-                            className="h5 mb-1 text-success" if df['hrv_rest'].iloc[0] >= 50 else "h5 mb-1 text-info"
-                        ),
-                        html.Small("Based on HRV levels", className="text-muted")
-                    ])
-                ], xs=12, md=3, className="mb-2"),
-                
-                dbc.Col([
-                    html.Div([
-                        html.H6("Activity Status", className="text-muted mb-2"),
-                        html.P(
-                            "Active" if df['step_count'].iloc[0] >= 10000 else "Regular", 
-                            className="h5 mb-1 text-success" if df['step_count'].iloc[0] >= 10000 else "h5 mb-1 text-warning"
-                        ),
-                        html.Small("Based on 10,000 steps/day", className="text-muted")
-                    ])
-                ], xs=12, md=3, className="mb-2"),
-            ])
+            insights,
+            
         ])
     ], className="shadow-sm mb-4")
 

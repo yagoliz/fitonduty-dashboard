@@ -483,7 +483,7 @@ def update_data_visualizations(group_id, show_all, participant_id, date_range):
     # If participant is selected
     if participant_id:
         # Return participant detail visualizations
-        return create_participant_detail_data(participant_id, start_date, end_date, "range")
+        return create_participant_detail_data(participant_id, start_date, end_date)
 
     # Default - no selection
     return html.Div([
@@ -596,24 +596,14 @@ def create_group_summary_data(group_id, start_date, end_date, mode):
         )
 
 
-def create_participant_detail_data(participant_id, start_date, end_date, mode):
+def create_participant_detail_data(participant_id, start_date, end_date):
     """Create data for participant detail visualizations"""
     try:
         # Load participant data
-        df_history = load_participant_data(participant_id, start_date, end_date)
+        df = load_participant_data(participant_id, start_date, end_date)
 
         # Load questionnaire data if available
-        questionnaire_df_history = load_questionnaire_data(participant_id, start_date, end_date)
-
-        if df_history.empty:
-            return html.Div(
-                "No data available for the selected participant and date range"
-            )
-
-        # Get the data for the last day
-        last_day = parse_and_format_date(end_date) if isinstance(end_date, str) else end_date
-        df_single_day = df_history[df_history["date"] == last_day]
-        questionnaire_df_single_day = questionnaire_df_history[questionnaire_df_history["date"] == last_day]
+        questionnaire_df = load_questionnaire_data(participant_id, start_date, end_date)
 
         # Get participant name if available
         try:
@@ -625,10 +615,9 @@ def create_participant_detail_data(participant_id, start_date, end_date, mode):
 
         # Create visualizations
         return create_participant_detail(
-            df_single_day,
-            df_history,
-            questionnaire_df_single_day,
-            questionnaire_df_history,
+            df,
+            questionnaire_df,
+            end_date,
             participant_name,
         )
     except Exception as e:

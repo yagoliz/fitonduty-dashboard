@@ -2,8 +2,10 @@ from datetime import datetime
 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
+import pandas as pd
 
 from components import create_daily_snapshot_card
+from utils.formatting import parse_and_format_date
 from utils.visualization import (
     create_heart_rate_trend_chart,
     create_hrv_trend_chart,
@@ -14,31 +16,41 @@ from utils.visualization import (
     create_sleep_quality_trend_chart,
 )
 
-def create_participant_detail(df_single_day, df_history, questionnaire_df, questionnaire_df_history, participant_name=None):
+def create_participant_detail(df_history: pd.DataFrame, questionnaire_df_history: pd.DataFrame, selected_date: datetime.date, participant_name=None):
     """
     Create visualizations for a single participant
     
     Args:
-        df_single_day: DataFrame with single day data (for summary cards)
         df_history: DataFrame with historical data (for trend charts)
+        questionnaire_df_history: DataFrame with historical questionnaire data
         participant_name: Name of the participant (optional)
         
     Returns:
         A dash component with participant detail visualizations
     """
-    if df_single_day.empty:
-        return html.Div([
-            dbc.Alert("No data available for the selected participant and date", color="warning")
-        ])
+
+    if df_history.empty:
+        df_single_day = pd.DataFrame()
+    else:
+        # Get the data for the last day
+        df_single_day = df_history[df_history["date"] == selected_date]
+    
+    if questionnaire_df_history.empty:
+        df_questionnaire_single = pd.DataFrame()
+    else:
+        # Get the questionnaire data for the last day
+        df_questionnaire_single = questionnaire_df_history[questionnaire_df_history["date"] == selected_date]
     
     title_prefix = f"{participant_name}'s" if participant_name else "Participant"
+
+    selected_date_str = selected_date.strftime("%Y-%m-%d")
     
     return html.Div([
         # Daily Summary
         html.Div([
             dbc.Row([
                 dbc.Col([
-                    create_daily_snapshot_card(df_single_day, questionnaire_df, df_single_day['date'].iloc[0])
+                    create_daily_snapshot_card(df_single_day, df_questionnaire_single, selected_date_str)
                 ], width=12, lg=6, className="mb-4"),
                 
                 # Heart Rate Zones Chart
