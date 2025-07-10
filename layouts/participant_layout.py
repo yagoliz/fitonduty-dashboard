@@ -50,8 +50,8 @@ def create_layout():
             
             # SECTION 1: RANKING (Whole dataset)
             html.Div([
-                html.H4("Your Data Consistency Ranking", className="section-title text-primary"),
-                html.P("Your ranking is calculated across your entire data history", className="text-muted mb-3"),
+                html.H4("Your Performance Rankings", className="section-title text-primary"),
+                html.P("Your rankings are calculated across your entire data history and compared within your group", className="text-muted mb-3"),
                 html.Div(id="participant-ranking-container"),
             ], className="mb-5"),
             

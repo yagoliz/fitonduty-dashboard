@@ -579,3 +579,78 @@ def load_questionnaire_data(user_id, start_date=None, end_date=None):
     except Exception as e:
         print(f"Error loading questionnaire data from database: {e}")
         return pd.DataFrame()  # Return empty dataframe on error
+    
+
+def get_participant_questionnaire_ranking(user_id, start_date, end_date):
+    """
+    Get the participant's questionnaire completion ranking within their group
+    
+    Args:
+        user_id: User ID
+        start_date: Start date for data range
+        end_date: End date for data range
+        
+    Returns:
+        Dictionary with questionnaire ranking information
+    """
+    
+    query = text("""
+        SELECT * FROM get_participant_questionnaire_rank(:user_id, :start_date, :end_date)
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {
+                "user_id": user_id,
+                "start_date": start_date,
+                "end_date": end_date
+            })
+            row = result.fetchone()
+            
+            if row:
+                ranking_data = {}
+                for idx, col in enumerate(result.keys()):
+                    ranking_data[col] = row[idx]
+                return ranking_data
+            return None
+    except Exception as e:
+        print(f"Error getting participant questionnaire ranking: {e}")
+        return None
+
+
+def get_all_group_questionnaire_ranking(user_id, start_date, end_date):
+    """
+    Get questionnaire ranking data for all participants in the user's group
+    
+    Args:
+        user_id: User ID to determine the group
+        start_date: Start date for data range
+        end_date: End date for data range
+        
+    Returns:
+        List of dictionaries with all participants' questionnaire ranking data
+    """
+    
+    query = text("""
+        SELECT * FROM get_group_questionnaire_ranking(:user_id, :start_date, :end_date)
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {
+                "user_id": user_id,
+                "start_date": start_date,
+                "end_date": end_date
+            })
+            
+            participants_data = []
+            for row in result:
+                participant_dict = {}
+                for idx, col in enumerate(result.keys()):
+                    participant_dict[col] = row[idx]
+                participants_data.append(participant_dict)
+                
+            return participants_data
+    except Exception as e:
+        print(f"Error getting group questionnaire ranking: {e}")
+        return []

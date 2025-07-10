@@ -47,6 +47,53 @@
     color: var(--secondary);
 }
 
+/* Section dividers and spacing */
+.section-subtitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--secondary);
+    border-left: 4px solid var(--primary);
+    padding-left: 0.75rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Add some spacing between ranking sections */
+.section-subtitle + .text-muted {
+    margin-left: 1rem;
+}
+
+/* Divider styling */
+hr.my-4 {
+    border-top: 2px solid rgba(0, 119, 182, 0.1);
+    margin: 2rem 0;
+}
+
+/* Ranking section container */
+.ranking-section {
+    padding: 1rem 0;
+}
+
+/* Enhanced section titles with icons */
+.section-subtitle::before {
+    content: '';
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* Responsive adjustments for sections */
+@media (max-width: 768px) {
+    .section-subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    hr.my-4 {
+        margin: 1.5rem 0;
+    }
+}
+
 /* Empty state */
 .empty-state {
     display: flex;

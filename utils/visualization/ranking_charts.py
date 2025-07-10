@@ -453,3 +453,202 @@ def create_ranking_trend_summary(ranking_history):
             ])
         ])
     ], className="mb-3")
+
+
+def create_questionnaire_race_figure(participant_data: list, current_participant_id: int):
+    """
+    Create a race-style visualization for questionnaire completion
+    
+    Args:
+        participant_data: List of dictionaries with participant questionnaire data
+        current_participant_id: ID of the current participant
+        
+    Returns:
+        Plotly figure object
+    """
+    import numpy as np
+    import plotly.graph_objects as go
+    
+    # Extract completion rates for all participants
+    completion_rates = []
+    participant_completion = 0
+    participant_username = ""
+    
+    for p in participant_data:
+        if p['participant_id'] == current_participant_id:
+            participant_completion = float(p.get('completion_rate', 0))
+            participant_username = p.get('username', 'You')
+        else:
+            completion_rates.append({
+                'completion_rate': float(p.get('completion_rate', 0)),
+                'username': p.get('username', f"Participant {p['participant_id']}")
+            })
+    
+    # Sort other participants by completion rate
+    completion_rates.sort(key=lambda x: x['completion_rate'], reverse=True)
+    
+    # Extract just the rates for normalization
+    other_rates = [cr['completion_rate'] for cr in completion_rates]
+    
+    # Convert to numpy arrays and normalize (0-1 scale)
+    other_rates_norm = np.array(other_rates) / 100.0 if other_rates else np.array([])
+    participant_norm = participant_completion / 100.0
+    
+    # Choose emoji based on completion rate
+    if participant_norm >= 0.8:
+        emoji = '🌟'  # Excellent
+    elif participant_norm >= 0.6:
+        emoji = '😊'  # Good
+    elif participant_norm >= 0.4:
+        emoji = '😐'  # OK
+    elif participant_norm >= 0.2:
+        emoji = '😔'  # Poor
+    else:
+        emoji = '😴'  # Very poor
+    
+    # Create y positions for other participants
+    n_others = len(other_rates_norm)
+    if n_others > 0:
+        base_positions = np.linspace(-0.4, 0.4, n_others)
+        y_positions = base_positions + np.random.uniform(-0.05, 0.05, n_others)
+    else:
+        y_positions = np.array([])
+    
+    # Create the figure
+    fig = go.Figure()
+    
+    # Add track lanes
+    for i in range(-2, 3):
+        y_pos = i * 0.2
+        fig.add_shape(
+            type="line",
+            x0=-0.05, x1=1.1,
+            y0=y_pos, y1=y_pos,
+            line=dict(color="white", width=1),
+            layer="between"
+        )
+    
+    # Add trace for other participants
+    if len(other_rates_norm) > 0:
+        fig.add_trace(go.Scatter(
+            x=other_rates_norm, 
+            y=y_positions, 
+            mode='markers', 
+            name='Other participants',
+            marker=dict(
+                size=30, 
+                color="rgba(150, 150, 150, 0.5)",
+                opacity=0.7,
+                line=dict(width=2, color='rgba(50, 50, 50, 0.8)'),
+                symbol='circle'
+            ),
+            hoverinfo="skip",
+            showlegend=False
+        ))
+    
+    # Add trace for current participant
+    fig.add_trace(go.Scatter(
+        x=[participant_norm], 
+        y=[0], 
+        mode='text+markers',
+        name='You',
+        text=[emoji],
+        textposition="middle center",
+        textfont=dict(size=45),
+        marker=dict(
+            size=40,
+            color='gold',
+            opacity=0.3,
+            line=dict(width=0)
+        ),
+        hovertemplate=f'{participant_username}<br>{participant_completion:.1f}% completion<br><b>Your position</b><extra></extra>',
+        showlegend=False
+    ))
+    
+    # Add finish line
+    fig.add_shape(
+        type="line",
+        x0=1, x1=1,
+        y0=-0.6, y1=0.6,
+        line=dict(color="green", width=4, dash="dash")
+    )
+    
+    # Add start line
+    fig.add_shape(
+        type="line",
+        x0=0, x1=0,
+        y0=-0.6, y1=0.6,
+        line=dict(color="white", width=2)
+    )
+    
+    # Add labels
+    fig.add_annotation(
+        x=1, y=0.7,
+        text="🏁 100%",
+        showarrow=False,
+        font=dict(size=14, color="green", weight=600)
+    )
+    
+    fig.add_annotation(
+        x=0, y=0.7,
+        text="Start",
+        showarrow=False,
+        font=dict(size=12, color="gray")
+    )
+    
+    # Add position indicator
+    rank = sum(1 for rate in other_rates if rate > participant_completion) + 1
+    total = len(other_rates) + 1
+    
+    fig.add_annotation(
+        x=participant_norm,
+        y=-0.7,
+        text=f"Position: {rank}/{total}",
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=2,
+        arrowcolor="rgba(0, 0, 0, 0.4)",
+        ax=0, ay=-30,
+        font=dict(size=12, weight=600)
+    )
+    
+    # Update layout
+    fig.update_layout(
+        title="Your Questionnaire Completion Progress",
+        xaxis=dict(
+            title="Completion Rate →",
+            showticklabels=True,
+            showgrid=True,
+            zeroline=False,
+            range=[-0.1, 1.15],
+            tickformat='.0%',
+            gridcolor='rgba(0,0,0,0.05)',
+            tickvals=[0, 0.25, 0.5, 0.75, 1],
+            ticktext=['0%', '25%', '50%', '75%', '100%']
+        ),
+        yaxis=dict(
+            showticklabels=False,
+            showgrid=False,
+            zeroline=False,
+            range=[-0.8, 0.8]
+        ),
+        showlegend=False,
+        height=None,
+        margin=dict(l=20, r=20, t=50, b=60),
+        plot_bgcolor='rgba(248, 249, 250, 0.3)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        hovermode='closest'
+    )
+    
+    # Add gradient background
+    fig.add_shape(
+        type="rect",
+        x0=-0.1, x1=1.15,
+        y0=-0.6, y1=0.6,
+        fillcolor="rgba(76, 175, 80, 0.2)",
+        line=dict(width=0),
+        layer="below"
+    )
+    
+    return fig

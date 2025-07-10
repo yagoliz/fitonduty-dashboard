@@ -1,7 +1,8 @@
 from dash import html
 import dash_bootstrap_components as dbc
+import pandas as pd
 
-def create_heart_rate_summary(df):
+def create_heart_rate_summary(df: pd.DataFrame):
     """Create heart rate summary statistics"""
     if df.empty:
         return html.Div("No data available")
@@ -28,7 +29,7 @@ def create_heart_rate_summary(df):
     ])
 
 
-def create_sleep_summary(df):
+def create_sleep_summary(df: pd.DataFrame):
     """Create sleep summary statistics"""
     if df.empty:
         return html.Div("No data available")
@@ -55,7 +56,7 @@ def create_sleep_summary(df):
     ])
 
 
-def create_hrv_summary(df):
+def create_hrv_summary(df: pd.DataFrame):
     """Create HRV summary statistics"""
     if df.empty:
         return html.Div("No data available")
@@ -89,7 +90,7 @@ def create_hrv_summary(df):
     ])
 
 
-def create_period_health_summary(df):
+def create_period_health_summary(df: pd.DataFrame):
     """Create a comprehensive health summary for the period"""
     if df.empty:
         return html.Div("No data available")
@@ -160,5 +161,60 @@ def create_period_health_summary(df):
                 html.Br(),
                 html.Small("Max - Resting", className="text-muted")
             ], className="mb-2"),
+        ])
+    ])
+
+
+def create_questionnaire_summary(df: pd.DataFrame):
+    """Create questionnaire summary statistics"""
+    from dash import html
+    import dash_bootstrap_components as dbc
+    
+    if df.empty:
+        return html.Div([
+            dbc.Alert([
+                html.I(className="fas fa-info-circle me-2"),
+                "No questionnaire data available for this period"
+            ], color="info", className="mb-0 text-center")
+        ])
+    
+    # Calculate averages
+    avg_sleep_quality = df["perceived_sleep_quality"].mean()
+    avg_fatigue = df["fatigue_level"].mean()
+    avg_motivation = df["motivation_level"].mean()
+    
+    # Calculate completion rate and trends
+    total_days = len(df)
+    
+    # Simple trend calculation (compare first half vs second half)
+    if total_days > 2:
+        mid_point = total_days // 2
+        first_half_motivation = df.head(mid_point)["motivation_level"].mean()
+        second_half_motivation = df.tail(total_days - mid_point)["motivation_level"].mean()
+        motivation_trend = second_half_motivation - first_half_motivation
+    else:
+        motivation_trend = 0
+    
+    # Determine trend indicator
+    trend_icon = "↑" if motivation_trend > 0.5 else "↓" if motivation_trend < -0.5 else "-"
+    
+    return html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.H3(f"{avg_sleep_quality:.1f}", className="text-success text-center"),
+                html.P("Avg Sleep Quality", className="text-muted text-center small"),
+            ], width=3),
+            dbc.Col([
+                html.H3(f"{avg_fatigue:.1f}", className="text-warning text-center"),
+                html.P("Avg Fatigue", className="text-muted text-center small"),
+            ], width=3),
+            dbc.Col([
+                html.H3(f"{avg_motivation:.1f}", className="text-primary text-center"),
+                html.P("Avg Motivation", className="text-muted text-center small"),
+            ], width=3),
+            dbc.Col([
+                html.H3([f"{total_days} ", html.Span(trend_icon, style={"fontSize": "0.8em"})], className="text-info text-center"),
+                html.P("Days Logged", className="text-muted text-center small"),
+            ], width=3),
         ])
     ])
