@@ -34,12 +34,14 @@ def create_participant_detail(df_history: pd.DataFrame, questionnaire_df_history
     else:
         # Get the data for the last day
         df_single_day = df_history[df_history["date"] == selected_date]
+        df_single_day.fillna(0, inplace=True)
     
     if questionnaire_df_history.empty:
         df_questionnaire_single = pd.DataFrame()
     else:
         # Get the questionnaire data for the last day
         df_questionnaire_single = questionnaire_df_history[questionnaire_df_history["date"] == selected_date]
+        df_questionnaire_single.fillna(0, inplace=True)
     
     title_prefix = f"{participant_name}'s" if participant_name else "Participant"
 
