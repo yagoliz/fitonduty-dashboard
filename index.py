@@ -9,7 +9,7 @@ from app import app, login_and_create_session
 from utils.database import get_user_by_username
 
 # Import layouts
-from layouts import login_layout, admin_layout, participant_layout, error_layouts
+from layouts import login_layout, admin_layout, participant_layout, supervisor_layout, error_layouts
 
 # Main app layout with URL routing
 app.layout = html.Div([
@@ -32,6 +32,8 @@ def display_page(pathname):
 
         if current_user.role == 'admin':
             return admin_layout.create_layout()
+        elif current_user.role == 'supervisor':
+            return supervisor_layout.create_layout()
         else:  # Participant view
             return participant_layout.create_layout()
     

@@ -43,7 +43,7 @@ class User(UserMixin):
     @property
     def groups(self):
         # Lazy load groups when needed
-        if self._groups is None and self.role == 'participant':
+        if self._groups is None and self.role in ['participant', 'supervisor']:
             self._groups = get_user_groups(self.id)
         return self._groups
     
@@ -62,6 +62,10 @@ class User(UserMixin):
     @property
     def is_participant(self):
         return self.role == 'participant'
+    
+    @property
+    def is_supervisor(self):
+        return self.role == 'supervisor'
     
     @property
     def display_name(self):

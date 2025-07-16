@@ -654,3 +654,171 @@ def get_all_group_questionnaire_ranking(user_id, start_date, end_date):
     except Exception as e:
         print(f"Error getting group questionnaire ranking: {e}")
         return []
+
+
+def get_supervisor_group_data(user_id, start_date, end_date):
+    """
+    Get aggregated data for a supervisor's assigned group
+    
+    Args:
+        user_id: Supervisor's user ID
+        start_date: Start date for data range
+        end_date: End date for data range
+        
+    Returns:
+        DataFrame with daily aggregated metrics and data counts
+    """
+    query = text("""
+        WITH supervisor_group AS (
+            SELECT g.id as group_id, g.group_name
+            FROM groups g
+            JOIN user_groups ug ON g.id = ug.group_id
+            WHERE ug.user_id = :user_id
+            LIMIT 1
+        ),
+        group_participants AS (
+            SELECT u.id as user_id, u.username, sg.group_id, sg.group_name
+            FROM users u
+            JOIN user_groups ug ON u.id = ug.user_id
+            JOIN supervisor_group sg ON ug.group_id = sg.group_id
+            WHERE u.role = 'participant'
+        ),
+        daily_health_aggregates AS (
+            SELECT 
+                hm.date,
+                gp.group_id,
+                gp.group_name,
+                COUNT(DISTINCT hm.user_id) as physio_data_count,
+                AVG(hm.resting_hr) as avg_resting_hr,
+                AVG(hm.max_hr) as avg_max_hr,
+                AVG(hm.sleep_hours) as avg_sleep_hours,
+                AVG(hm.hrv_rest) as avg_hrv_rest,
+                AVG(hm.step_count) as avg_step_count
+            FROM health_metrics hm
+            JOIN group_participants gp ON hm.user_id = gp.user_id
+            WHERE hm.date BETWEEN :start_date AND :end_date
+            GROUP BY hm.date, gp.group_id, gp.group_name
+        ),
+        daily_questionnaire_aggregates AS (
+            SELECT 
+                qd.date,
+                gp.group_id,
+                gp.group_name,
+                COUNT(DISTINCT qd.user_id) as questionnaire_data_count,
+                AVG(qd.perceived_sleep_quality) as avg_sleep_quality,
+                AVG(qd.fatigue_level) as avg_fatigue_level,
+                AVG(qd.motivation_level) as avg_motivation_level
+            FROM questionnaire_data qd
+            JOIN group_participants gp ON qd.user_id = gp.user_id
+            WHERE qd.date BETWEEN :start_date AND :end_date
+            GROUP BY qd.date, gp.group_id, gp.group_name
+        )
+        SELECT 
+            COALESCE(dha.date, dqa.date) as date,
+            COALESCE(dha.group_id, dqa.group_id) as group_id,
+            COALESCE(dha.group_name, dqa.group_name) as group_name,
+            COALESCE(dha.physio_data_count, 0) as physio_data_count,
+            COALESCE(dqa.questionnaire_data_count, 0) as questionnaire_data_count,
+            dha.avg_resting_hr,
+            dha.avg_max_hr,
+            dha.avg_sleep_hours,
+            dha.avg_hrv_rest,
+            dha.avg_step_count,
+            dqa.avg_sleep_quality,
+            dqa.avg_fatigue_level,
+            dqa.avg_motivation_level
+        FROM daily_health_aggregates dha
+        FULL OUTER JOIN daily_questionnaire_aggregates dqa 
+            ON dha.date = dqa.date AND dha.group_id = dqa.group_id
+        ORDER BY date
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {
+                "user_id": user_id,
+                "start_date": start_date,
+                "end_date": end_date
+            })
+            
+            df = pd.DataFrame(result.fetchall(), columns=result.keys())
+            return df
+    except Exception as e:
+        print(f"Error getting supervisor group data: {e}")
+        return pd.DataFrame()
+
+
+def get_supervisor_group_info(user_id):
+    """
+    Get supervisor's assigned group information
+    
+    Args:
+        user_id: Supervisor's user ID
+        
+    Returns:
+        Dictionary with group information
+    """
+    query = text("""
+        SELECT g.id, g.group_name, g.description
+        FROM groups g
+        JOIN user_groups ug ON g.id = ug.group_id
+        WHERE ug.user_id = :user_id
+        LIMIT 1
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {"user_id": user_id})
+            row = result.fetchone()
+            
+            if row:
+                group_info = {}
+                for idx, col in enumerate(result.keys()):
+                    group_info[col] = row[idx]
+                return group_info
+            return None
+    except Exception as e:
+        print(f"Error getting supervisor group info: {e}")
+        return None
+
+
+def get_supervisor_group_participants(user_id):
+    """
+    Get list of participants in supervisor's assigned group
+    
+    Args:
+        user_id: Supervisor's user ID
+        
+    Returns:
+        List of participant dictionaries
+    """
+    query = text("""
+        SELECT u.id, u.username, u.display_name
+        FROM users u
+        JOIN user_groups ug ON u.id = ug.user_id
+        JOIN (
+            SELECT g.id as group_id
+            FROM groups g
+            JOIN user_groups ug2 ON g.id = ug2.group_id
+            WHERE ug2.user_id = :user_id
+            LIMIT 1
+        ) sg ON ug.group_id = sg.group_id
+        WHERE u.role = 'participant'
+        ORDER BY u.username
+    """)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {"user_id": user_id})
+            
+            participants = []
+            for row in result:
+                participant_dict = {}
+                for idx, col in enumerate(result.keys()):
+                    participant_dict[col] = row[idx]
+                participants.append(participant_dict)
+                
+            return participants
+    except Exception as e:
+        print(f"Error getting supervisor group participants: {e}")
+        return []
