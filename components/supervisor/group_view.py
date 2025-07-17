@@ -9,6 +9,9 @@ from utils.visualization.supervisor_charts import (
     create_subjective_metrics_chart,
     create_empty_chart
 )
+from utils.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_supervisor_group_view(user_id, start_date, end_date):
@@ -23,27 +26,50 @@ def create_supervisor_group_view(user_id, start_date, end_date):
     Returns:
         A dash component with supervisor group visualization
     """
+    logger.info(f"Creating supervisor group view for user_id={user_id}, start_date={start_date}, end_date={end_date}")
+    
     try:
         # Get supervisor's group info
+        logger.debug(f"Getting supervisor group info for user_id={user_id}")
         group_info = get_supervisor_group_info(user_id)
         
         if not group_info:
+            logger.warning(f"No group assigned to supervisor user_id={user_id} or access denied")
             return html.Div([
                 dbc.Alert("No group assigned to supervisor or access denied.", color="warning")
             ])
         
+        logger.info(f"Supervisor user_id={user_id} assigned to group: {group_info['group_name']} (id={group_info['id']})")
+        
         # Get aggregated data for the group
+        logger.debug(f"Getting aggregated data for group_id={group_info['id']} from {start_date} to {end_date}")
         df = get_supervisor_group_data(user_id, start_date, end_date)
         
         if df.empty:
+            logger.warning(f"No data available for group '{group_info['group_name']}' during period {start_date} to {end_date}")
             return html.Div([
                 dbc.Alert(f"No data available for {group_info['group_name']} during the selected period.", color="info")
             ])
         
+        logger.info(f"Retrieved {len(df)} days of data for group '{group_info['group_name']}'")
+        logger.debug(f"Data date range: {df['date'].min()} to {df['date'].max()}")
+        
+        # Log data availability summary
+        physio_days = df[df['physio_data_count'] > 0].shape[0]
+        questionnaire_days = df[df['questionnaire_data_count'] > 0].shape[0]
+        logger.info(f"Data summary: {physio_days} days with physiological data, {questionnaire_days} days with questionnaire data")
+        
         # Create the components
+        logger.debug("Creating summary cards")
         summary_cards = create_summary_cards(df)
+        
+        logger.debug("Creating data count charts")
         data_count_charts = create_data_count_charts(df)
+        
+        logger.debug("Creating aggregated metrics charts")
         aggregated_metrics_charts = create_aggregated_metrics_charts(df)
+        
+        logger.info(f"Successfully created supervisor group view for user_id={user_id}")
         
         return html.Div([          
             # Summary cards
@@ -71,7 +97,7 @@ def create_supervisor_group_view(user_id, start_date, end_date):
         ])
         
     except Exception as e:
-        print(f"Error creating supervisor group view: {e}")
+        logger.error(f"Error creating supervisor group view for user_id={user_id}: {str(e)}", exc_info=True)
         return html.Div([
             dbc.Alert(f"Error loading group data: {str(e)}", color="danger")
         ])
@@ -92,7 +118,10 @@ def create_group_header(group_info, start_date, end_date):
 
 def create_summary_cards(df):
     """Create summary cards with key metrics"""
+    logger.debug("Creating summary cards")
+    
     if df.empty:
+        logger.warning("No data available for summary cards")
         return html.Div("No data available for summary")
     
     # Calculate summary statistics
@@ -111,6 +140,10 @@ def create_summary_cards(df):
     avg_sleep_quality = df['avg_sleep_quality'].mean()
     avg_fatigue_level = df['avg_fatigue_level'].mean()
     avg_motivation_level = df['avg_motivation_level'].mean()
+    
+    logger.debug(f"Summary statistics: total_days={total_days}, avg_physio_participation={avg_physio_participation:.2f}, avg_questionnaire_participation={avg_questionnaire_participation:.2f}")
+    logger.debug(f"Physiological averages: HR={avg_resting_hr:.1f}, Sleep={avg_sleep_hours:.1f}, Steps={avg_step_count:.0f}")
+    logger.debug(f"Subjective averages: Sleep Quality={avg_sleep_quality:.1f}, Fatigue={avg_fatigue_level:.1f}, Motivation={avg_motivation_level:.1f}")
     
     return html.Div([
         # Top row: Data Collection and Participation Rates
@@ -279,13 +312,24 @@ def create_summary_cards(df):
 
 def create_data_count_charts(df):
     """Create charts showing data collection counts over time"""
+    logger.debug("Creating data count charts")
+    
     if df.empty:
+        logger.warning("No data available for data count charts")
         return html.Div([
             dbc.Alert("No data available for data count charts", color="info")
         ])
     
+    # Log data availability for charts
+    physio_data_points = df[df['physio_data_count'] > 0].shape[0]
+    questionnaire_data_points = df[df['questionnaire_data_count'] > 0].shape[0]
+    logger.debug(f"Data count chart data: {physio_data_points} days with physio data, {questionnaire_data_points} days with questionnaire data")
+    
     # Create charts using visualization functions
+    logger.debug("Creating physiological data count chart")
     fig_physio = create_data_count_chart(df, 'physio_data_count', 'Daily Physiological Data Collection', '#007bff')
+    
+    logger.debug("Creating questionnaire data count chart")
     fig_questionnaire = create_data_count_chart(df, 'questionnaire_data_count', 'Daily Questionnaire Completion', '#28a745')
     
     return dbc.Row([
@@ -337,13 +381,24 @@ def create_data_count_charts(df):
 
 def create_aggregated_metrics_charts(df):
     """Create charts showing aggregated physiological and questionnaire metrics"""
+    logger.debug("Creating aggregated metrics charts")
+    
     if df.empty:
+        logger.warning("No data available for aggregated metrics charts")
         return html.Div([
             dbc.Alert("No data available for aggregated metrics charts", color="info")
         ])
     
+    # Log data availability for metrics charts
+    physio_metrics_days = df.dropna(subset=['avg_resting_hr', 'avg_sleep_hours'], how='all').shape[0]
+    subjective_metrics_days = df.dropna(subset=['avg_sleep_quality', 'avg_fatigue_level', 'avg_motivation_level'], how='all').shape[0]
+    logger.debug(f"Metrics chart data: {physio_metrics_days} days with physiological metrics, {subjective_metrics_days} days with subjective metrics")
+    
     # Create charts using visualization functions
+    logger.debug("Creating dual-axis physiological chart")
     fig_physio = create_dual_axis_physiological_chart(df)
+    
+    logger.debug("Creating subjective metrics chart")
     fig_questionnaire = create_subjective_metrics_chart(df)
     
     return dbc.Row([

@@ -8,6 +8,9 @@ from components.supervisor.navbar import create_navbar
 from components.supervisor.group_view import create_group_header
 from components.footer import create_footer
 from utils.database import get_supervisor_group_info
+from utils.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_layout():
@@ -17,19 +20,28 @@ def create_layout():
     Returns:
         A dash component with the supervisor dashboard
     """
+    logger.info("Creating supervisor layout")
+    
     # Get the current supervisor's information
     display_name = current_user.display_name if current_user.is_authenticated else "Not logged in"
+    logger.debug(f"Current user: {display_name} (authenticated: {current_user.is_authenticated})")
     
     # Get supervisor's group information
     group_info = None
     if current_user.is_authenticated:
+        logger.debug(f"Getting group info for supervisor user_id={current_user.id}")
         group_info = get_supervisor_group_info(current_user.id)
+        if group_info:
+            logger.info(f"Supervisor user_id={current_user.id} assigned to group: {group_info['group_name']} (id={group_info['id']})")
+        else:
+            logger.warning(f"No group assigned to supervisor user_id={current_user.id}")
     
     # Set default dates
     today = datetime.now().date()
     seven_days_ago = today - timedelta(days=6)
+    logger.debug(f"Default date range: {seven_days_ago} to {today}")
     
-    return html.Div([
+    layout = html.Div([
         # Navigation bar - outside the container for full width
         create_navbar(),
         
@@ -110,3 +122,6 @@ def create_layout():
             create_footer()
         ], className="px-3 px-md-4")
     ])
+    
+    logger.info("Successfully created supervisor layout")
+    return layout
