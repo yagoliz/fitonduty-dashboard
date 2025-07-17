@@ -356,3 +356,123 @@ def create_group_daily_line_chart(daily_data):
     fig.update_xaxes(tickformat="%b %d", tickangle=-45, row=1, col=2)
     
     return fig
+
+
+def create_group_physiological_line_chart(daily_data):
+    """Create line plot showing daily physiological data counts"""
+    import pandas as pd
+    
+    if not daily_data:
+        # Return empty figure if no data
+        fig = go.Figure()
+        fig.update_layout(
+            title="No daily data available",
+            template='plotly_white',
+            height=400
+        )
+        return fig
+    
+    # Convert to DataFrame for easier manipulation
+    df = pd.DataFrame(daily_data)
+    
+    # Create single plot
+    fig = go.Figure()
+    
+    # Get unique groups for consistent colors
+    groups = df['group_name'].unique()
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    
+    # Add physiological data traces
+    for i, group in enumerate(groups):
+        group_data = df[df['group_name'] == group]
+        fig.add_trace(
+            go.Scatter(
+                x=group_data['date'],
+                y=group_data['physio_count'],
+                mode='lines+markers',
+                name=group,
+                line=dict(color=colors[i % len(colors)], width=2),
+                marker=dict(size=6)
+            )
+        )
+    
+    # Update layout
+    fig.update_layout(
+        title_text="Daily Physiological Data Availability",
+        title_x=0.5,
+        height=400,
+        template='plotly_white',
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01
+        ),
+        xaxis_title="Date",
+        yaxis_title="Number of Participants"
+    )
+    
+    # Format x-axis dates
+    fig.update_xaxes(tickformat="%b %d", tickangle=-45)
+    
+    return fig
+
+
+def create_group_questionnaire_line_chart(daily_data):
+    """Create line plot showing daily questionnaire data counts"""
+    import pandas as pd
+    
+    if not daily_data:
+        # Return empty figure if no data
+        fig = go.Figure()
+        fig.update_layout(
+            title="No daily data available",
+            template='plotly_white',
+            height=400
+        )
+        return fig
+    
+    # Convert to DataFrame for easier manipulation
+    df = pd.DataFrame(daily_data)
+    
+    # Create single plot
+    fig = go.Figure()
+    
+    # Get unique groups for consistent colors
+    groups = df['group_name'].unique()
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    
+    # Add questionnaire data traces
+    for i, group in enumerate(groups):
+        group_data = df[df['group_name'] == group]
+        fig.add_trace(
+            go.Scatter(
+                x=group_data['date'],
+                y=group_data['questionnaire_count'],
+                mode='lines+markers',
+                name=group,
+                line=dict(color=colors[i % len(colors)], width=2),
+                marker=dict(size=6)
+            )
+        )
+    
+    # Update layout
+    fig.update_layout(
+        title_text="Daily Questionnaire Data Availability",
+        title_x=0.5,
+        height=400,
+        template='plotly_white',
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01
+        ),
+        xaxis_title="Date",
+        yaxis_title="Number of Participants"
+    )
+    
+    # Format x-axis dates
+    fig.update_xaxes(tickformat="%b %d", tickangle=-45)
+    
+    return fig

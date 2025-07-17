@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from utils.visualization.general_charts import create_group_data_summary_chart, create_group_daily_line_chart
+from utils.visualization.general_charts import create_group_data_summary_chart, create_group_daily_line_chart, create_group_physiological_line_chart, create_group_questionnaire_line_chart
 
 
 def create_group_data_summary_visualization(group_data, daily_data=None):
@@ -16,14 +16,16 @@ def create_group_data_summary_visualization(group_data, daily_data=None):
                 dbc.Alert("No group data available", color="info")
             ])
         
-        # Create the line chart with daily data
+        # Create separate charts for physiological and questionnaire data
         if daily_data:
-            print(f"DEBUG COMPONENT: Creating line chart with {len(daily_data)} daily data points")
-            fig = create_group_daily_line_chart(daily_data)
+            print(f"DEBUG COMPONENT: Creating separate charts with {len(daily_data)} daily data points")
+            physio_fig = create_group_physiological_line_chart(daily_data)
+            questionnaire_fig = create_group_questionnaire_line_chart(daily_data)
         else:
             # If no daily data, show message instead of chart
             print("DEBUG COMPONENT: No daily data provided")
-            fig = None
+            physio_fig = None
+            questionnaire_fig = None
         
         # Create summary table for current day data
         table_data = []
@@ -47,29 +49,83 @@ def create_group_data_summary_visualization(group_data, daily_data=None):
             size="sm"
         )
         
-        # Return combined visualization with table on top
-        components = [
-            html.H5("Current Day Data Summary", className="mb-3"),
-            html.P("Number of participants with data for the selected day.", 
-                   className="text-muted mb-3"),
-            data_table,
-            html.Hr(),
-        ]
+        # Create Cards for each component
+        components = []
         
-        if fig:
-            components.extend([
-                dcc.Graph(figure=fig),
-                html.Hr(),
+        # Summary Table Card
+        summary_card = dbc.Card([
+            dbc.CardHeader(html.H5("Current Day Data Summary", className="card-title")),
+            dbc.CardBody([
+                html.P("Number of participants with data for the selected day.", 
+                       className="text-muted mb-3"),
+                data_table
+            ])
+        ], className="mb-4")
+        components.append(summary_card)
+        
+        # Daily Trends Chart Cards - Side by Side
+        if physio_fig and questionnaire_fig:
+            # Create a row with two charts side by side
+            charts_row = dbc.Row([
+                # Physiological Data Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Physiological Data Trends", className="card-title")),
+                        dbc.CardBody([
+                            html.Div([
+                                dcc.Graph(
+                                    figure=physio_fig,
+                                    config={
+                                        'displayModeBar': False,
+                                        'responsive': True
+                                    },
+                                    className="chart-container",
+                                    style={"height": "100%", "width": "100%"}
+                                )
+                            ], className="chart-wrapper", style={"height": "400px"})
+                        ])
+                    ])
+                ], width=12, lg=6, className="mb-4"),
+                
+                # Questionnaire Data Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader(html.H5("Questionnaire Data Trends", className="card-title")),
+                        dbc.CardBody([
+                            html.Div([
+                                dcc.Graph(
+                                    figure=questionnaire_fig,
+                                    config={
+                                        'displayModeBar': False,
+                                        'responsive': True
+                                    },
+                                    className="chart-container",
+                                    style={"height": "100%", "width": "100%"}
+                                )
+                            ], className="chart-wrapper", style={"height": "400px"})
+                        ])
+                    ])
+                ], width=12, lg=6, className="mb-4")
+            ])
+            components.append(charts_row)
+            
+            # Add legend below the charts
+            components.append(
                 html.Div([
                     html.P([
                         html.Strong("Chart Legend: "),
                         html.Span("Shows daily data availability trends over the selected date range")
-                    ], className="text-muted small")
-                ])
-            ])
+                    ], className="text-muted small text-center")
+                ], className="mb-4")
+            )
         else:
             components.append(
-                dbc.Alert("No daily data available for line charts", color="info")
+                dbc.Card([
+                    dbc.CardHeader(html.H5("Daily Data Availability Trends", className="card-title")),
+                    dbc.CardBody([
+                        dbc.Alert("No daily data available for line charts", color="info")
+                    ])
+                ], className="mb-4")
             )
         
         return html.Div(components)
