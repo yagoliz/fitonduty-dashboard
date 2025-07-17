@@ -93,14 +93,18 @@ def populate_group_dropdown(pathname, show_all):
         # Get all groups from database
         groups = get_all_groups()
 
-        # Create dropdown options
-        options = [{"label": group["name"], "value": group["id"]} for group in groups]
-
-        # Default to first group if available
-        default_value = groups[0]["id"] if groups else None
-
         # Disable dropdown if show all groups is checked
         disabled = 1 in show_all
+
+        if disabled:
+            # When showing all groups, display "All Groups" option
+            options = [{"label": "All Groups", "value": "all"}]
+            default_value = "all"
+        else:
+            # Create dropdown options for individual groups
+            options = [{"label": group["name"], "value": group["id"]} for group in groups]
+            # Default to first group if available
+            default_value = groups[0]["id"] if groups else None
 
         return options, default_value, disabled
     except Exception as e:
