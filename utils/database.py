@@ -755,6 +755,7 @@ def get_supervisor_group_data(user_id, start_date, end_date):
         FROM daily_health_aggregates dha
         FULL OUTER JOIN daily_questionnaire_aggregates dqa 
             ON dha.date = dqa.date AND dha.group_id = dqa.group_id
+        WHERE COALESCE(dha.date, dqa.date) IS NOT NULL
         ORDER BY date
     """)
     

@@ -37,37 +37,41 @@ def create_dual_axis_physiological_chart(df):
     if df.empty:
         return create_empty_chart("Average Physiological Metrics")
     
-    # Filter out null values
-    df_clean = df.dropna()
+    # Filter out rows where both physiological metrics are null
+    df_clean = df.dropna(subset=['avg_resting_hr', 'avg_sleep_hours'], how='all')
     
     if df_clean.empty:
         return create_empty_chart("Average Physiological Metrics")
     
     fig = go.Figure()
     
-    # Add resting heart rate
-    fig.add_trace(go.Scatter(
-        x=df_clean['date'],
-        y=df_clean['avg_resting_hr'],
-        mode='lines+markers',
-        name='Avg Resting HR (bpm)',
-        line=dict(color='#dc3545', width=2),
-        line_shape='spline',
-        marker=dict(size=4),
-        yaxis='y1'
-    ))
+    # Add resting heart rate (only for non-null values)
+    df_hr = df_clean.dropna(subset=['avg_resting_hr'])
+    if not df_hr.empty:
+        fig.add_trace(go.Scatter(
+            x=df_hr['date'],
+            y=df_hr['avg_resting_hr'],
+            mode='lines+markers',
+            name='Avg Resting HR (bpm)',
+            line=dict(color='#dc3545', width=2),
+            line_shape='spline',
+            marker=dict(size=4),
+            yaxis='y1'
+        ))
     
-    # Add sleep hours
-    fig.add_trace(go.Scatter(
-        x=df_clean['date'],
-        y=df_clean['avg_sleep_hours'],
-        mode='lines+markers',
-        name='Avg Sleep Hours',
-        line=dict(color='#6f42c1', width=2),
-        line_shape='spline',
-        marker=dict(size=4),
-        yaxis='y2'
-    ))
+    # Add sleep hours (only for non-null values)
+    df_sleep = df_clean.dropna(subset=['avg_sleep_hours'])
+    if not df_sleep.empty:
+        fig.add_trace(go.Scatter(
+            x=df_sleep['date'],
+            y=df_sleep['avg_sleep_hours'],
+            mode='lines+markers',
+            name='Avg Sleep Hours',
+            line=dict(color='#6f42c1', width=2),
+            line_shape='spline',
+            marker=dict(size=4),
+            yaxis='y2'
+        ))
     
     fig.update_layout(
         title="Average Physiological Metrics",
@@ -110,46 +114,52 @@ def create_subjective_metrics_chart(df):
     if df.empty:
         return create_empty_chart("Average Subjective Assessment Metrics")
     
-    # Filter out null values
-    df_clean = df.dropna()
+    # Filter out rows where all subjective metrics are null
+    df_clean = df.dropna(subset=['avg_sleep_quality', 'avg_fatigue_level', 'avg_motivation_level'], how='all')
     
     if df_clean.empty:
         return create_empty_chart("Average Subjective Assessment Metrics")
     
     fig = go.Figure()
     
-    # Add sleep quality
-    fig.add_trace(go.Scatter(
-        x=df_clean['date'],
-        y=df_clean['avg_sleep_quality'],
-        mode='lines+markers',
-        name='Avg Sleep Quality',
-        line=dict(color='#20c997', width=2),
-        line_shape='spline',
-        marker=dict(size=4)
-    ))
+    # Add sleep quality (only for non-null values)
+    df_sleep_quality = df_clean.dropna(subset=['avg_sleep_quality'])
+    if not df_sleep_quality.empty:
+        fig.add_trace(go.Scatter(
+            x=df_sleep_quality['date'],
+            y=df_sleep_quality['avg_sleep_quality'],
+            mode='lines+markers',
+            name='Avg Sleep Quality',
+            line=dict(color='#20c997', width=2),
+            line_shape='spline',
+            marker=dict(size=4)
+        ))
     
-    # Add fatigue level
-    fig.add_trace(go.Scatter(
-        x=df_clean['date'],
-        y=df_clean['avg_fatigue_level'],
-        mode='lines+markers',
-        name='Avg Fatigue Level',
-        line=dict(color='#fd7e14', width=2),
-        line_shape='spline',
-        marker=dict(size=4)
-    ))
+    # Add fatigue level (only for non-null values)
+    df_fatigue = df_clean.dropna(subset=['avg_fatigue_level'])
+    if not df_fatigue.empty:
+        fig.add_trace(go.Scatter(
+            x=df_fatigue['date'],
+            y=df_fatigue['avg_fatigue_level'],
+            mode='lines+markers',
+            name='Avg Fatigue Level',
+            line=dict(color='#fd7e14', width=2),
+            line_shape='spline',
+            marker=dict(size=4)
+        ))
     
-    # Add motivation level
-    fig.add_trace(go.Scatter(
-        x=df_clean['date'],
-        y=df_clean['avg_motivation_level'],
-        mode='lines+markers',
-        name='Avg Motivation Level',
-        line=dict(color='#198754', width=2),
-        line_shape='spline',
-        marker=dict(size=4)
-    ))
+    # Add motivation level (only for non-null values)
+    df_motivation = df_clean.dropna(subset=['avg_motivation_level'])
+    if not df_motivation.empty:
+        fig.add_trace(go.Scatter(
+            x=df_motivation['date'],
+            y=df_motivation['avg_motivation_level'],
+            mode='lines+markers',
+            name='Avg Motivation Level',
+            line=dict(color='#198754', width=2),
+            line_shape='spline',
+            marker=dict(size=4)
+        ))
     
     fig.update_layout(
         title="Average Subjective Assessment Metrics",
