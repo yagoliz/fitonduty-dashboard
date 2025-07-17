@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from utils.visualization.general_charts import create_group_data_summary_chart, create_group_daily_line_chart, create_group_physiological_line_chart, create_group_questionnaire_line_chart
+from utils.visualization.data_compliance_charts import create_group_physiological_line_chart, create_group_questionnaire_line_chart
 from utils.logging_config import get_logger
 
 logger = get_logger(__name__)

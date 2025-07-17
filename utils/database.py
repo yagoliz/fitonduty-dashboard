@@ -123,6 +123,33 @@ def create_session(user_id, session_token, ip_address, user_agent, expires_at):
         conn.commit()
 
 
+def get_num_participants_by_group(group_id=None):
+    """Get the number of participants in the group"""
+    if group_id:
+        query = text("""
+            SELECT COUNT(*) as participant_count
+            FROM users u
+            JOIN user_groups ug ON u.id = ug.user_id
+            WHERE u.role = 'participant' AND ug.group_id = :group_id
+        """)
+        params = {"group_id": group_id}
+    else:
+        query = text("""
+            SELECT COUNT(*) as participant_count
+            FROM users
+            WHERE role = 'participant'
+        """)
+        params = {}
+    
+    with engine.connect() as conn:
+        result = conn.execute(query, params)
+        row = result.fetchone()[0]
+        
+        if row:
+            return int(row)
+        return 0
+
+
 def get_participants_by_group(group_id=None):
     """Get all participants grouped by their group"""
     if group_id:
@@ -681,7 +708,7 @@ def get_all_group_questionnaire_ranking(user_id, start_date, end_date):
         return []
 
 
-def get_supervisor_group_data(user_id, start_date, end_date):
+def get_supervisor_group_data(user_id, start_date, end_date, num_participants=0):
     """
     Get aggregated data for a supervisor's assigned group
     
@@ -689,6 +716,7 @@ def get_supervisor_group_data(user_id, start_date, end_date):
         user_id: Supervisor's user ID
         start_date: Start date for data range
         end_date: End date for data range
+        num_participants: Number of participants in the group (optional)
         
     Returns:
         DataFrame with daily aggregated metrics and data counts

@@ -5,7 +5,7 @@ from ..logging_config import get_logger
 
 logger = get_logger(__name__)
 
-def create_data_count_chart(df, y_col, title, color='#007bff'):
+def create_data_count_chart(df, y_col, title, num_participants=0, color='#4CAF50', secondary_color="#FFA726"):
     """Create a line chart showing data collection counts over time"""
     logger.debug(f"Creating data count chart: {title}")
     
@@ -22,14 +22,11 @@ def create_data_count_chart(df, y_col, title, color='#007bff'):
     logger.debug(f"Chart {title}: {data_points} data points, {non_zero_days} non-zero days, max={max_count}, avg={avg_count:.2f}")
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
+    fig.add_trace(go.Bar(
         x=df['date'],
         y=df[y_col],
-        mode='lines+markers',
         name=title,
-        line=dict(color=color, width=2),
-        line_shape='spline',
-        marker=dict(size=6)
+        marker_color=df[y_col].apply(lambda x: color if x > num_participants//2 else secondary_color),
     ))
     
     fig.update_layout(
@@ -41,6 +38,10 @@ def create_data_count_chart(df, y_col, title, color='#007bff'):
         template='plotly_white',
         autosize=True,
         height=None,
+    )
+
+    fig.update_yaxes(
+        range=[0, num_participants*1.1] if num_participants > 0 else [0, max(10, df[y_col].max() * 1.1)],
     )
     
     logger.debug(f"Successfully created chart: {title}")

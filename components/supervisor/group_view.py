@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from utils.database import get_supervisor_group_data, get_supervisor_group_info
+from utils.database import get_num_participants_by_group, get_supervisor_group_data, get_supervisor_group_info
 from utils.visualization.supervisor_charts import (
     create_data_count_chart,
     create_dual_axis_physiological_chart,
@@ -43,7 +43,8 @@ def create_supervisor_group_view(user_id, start_date, end_date):
         
         # Get aggregated data for the group
         logger.debug(f"Getting aggregated data for group_id={group_info['id']} from {start_date} to {end_date}")
-        df = get_supervisor_group_data(user_id, start_date, end_date)
+        num_participants = get_num_participants_by_group(group_info['id'])
+        df = get_supervisor_group_data(user_id, start_date, end_date, num_participants)
         
         if df.empty:
             logger.warning(f"No data available for group '{group_info['group_name']}' during period {start_date} to {end_date}")
@@ -64,7 +65,7 @@ def create_supervisor_group_view(user_id, start_date, end_date):
         summary_cards = create_summary_cards(df)
         
         logger.debug("Creating data count charts")
-        data_count_charts = create_data_count_charts(df)
+        data_count_charts = create_data_count_charts(df, num_participants=num_participants)
         
         logger.debug("Creating aggregated metrics charts")
         aggregated_metrics_charts = create_aggregated_metrics_charts(df)
@@ -310,7 +311,7 @@ def create_summary_cards(df):
     ])
 
 
-def create_data_count_charts(df):
+def create_data_count_charts(df, num_participants=0):
     """Create charts showing data collection counts over time"""
     logger.debug("Creating data count charts")
     
@@ -327,10 +328,10 @@ def create_data_count_charts(df):
     
     # Create charts using visualization functions
     logger.debug("Creating physiological data count chart")
-    fig_physio = create_data_count_chart(df, 'physio_data_count', 'Daily Physiological Data Collection', '#007bff')
+    fig_physio = create_data_count_chart(df, 'physio_data_count', 'Daily Physiological Data Collection', num_participants=num_participants, color='#007bff')
     
     logger.debug("Creating questionnaire data count chart")
-    fig_questionnaire = create_data_count_chart(df, 'questionnaire_data_count', 'Daily Questionnaire Completion', '#28a745')
+    fig_questionnaire = create_data_count_chart(df, 'questionnaire_data_count', 'Daily Questionnaire Completion', num_participants=num_participants, color='#28a745')
     
     return dbc.Row([
         dbc.Col([
