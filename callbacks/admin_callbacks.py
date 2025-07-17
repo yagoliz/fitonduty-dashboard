@@ -8,6 +8,7 @@ import pandas as pd
 from components.admin.group_comparison import create_group_comparison
 from components.admin.group_summary import create_group_summary
 from components.admin.participant_detail import create_participant_detail
+from components.admin.group_data_summary import create_group_data_summary_visualization
 
 from utils.formatting import parse_and_format_date
 from utils.database import (
@@ -18,6 +19,8 @@ from utils.database import (
     load_anomaly_data,
     load_participant_data,
     load_questionnaire_data,
+    get_group_data_summary,
+    get_group_daily_data_counts,
 )
 from utils.visualization import (
     create_empty_chart,
@@ -81,9 +84,10 @@ def update_admin_user_info(pathname):
 @callback(
     Output("group-dropdown", "options"),
     Output("group-dropdown", "value"),
-    Input("url", "pathname"),
+    Output("group-dropdown", "disabled"),
+    [Input("url", "pathname"), Input("show-all-checkbox", "value")],
 )
-def populate_group_dropdown(pathname):
+def populate_group_dropdown(pathname, show_all):
     """Populate the group dropdown with all available groups"""
     try:
         # Get all groups from database
@@ -95,10 +99,13 @@ def populate_group_dropdown(pathname):
         # Default to first group if available
         default_value = groups[0]["id"] if groups else None
 
-        return options, default_value
+        # Disable dropdown if show all groups is checked
+        disabled = 1 in show_all
+
+        return options, default_value, disabled
     except Exception as e:
         print(f"Error populating group dropdown: {e}")
-        return [], None
+        return [], None, False
 
 
 # Callback to update participant dropdown based on selected group
@@ -110,8 +117,20 @@ def populate_group_dropdown(pathname):
 def update_participant_dropdown(selected_group, show_all):
     """Update the participant dropdown based on selected group"""
 
+    # If showing all groups, create disabled dropdown
     if 1 in show_all:
-        return html.Div("Showing data for all participants")
+        return html.Div(
+            [
+                html.Label("Participant"),
+                dcc.Dropdown(
+                    id="participant-dropdown",
+                    options=[{"label": "All participants", "value": "all"}],
+                    value="all",
+                    clearable=False,
+                    disabled=True,
+                ),
+            ]
+        )
 
     if not selected_group:
         return html.Div("No group selected")
@@ -411,7 +430,7 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
         if not participant_id:
             return html.Div([
                 html.H4(f"Viewing: {group_name} {date_info}"),
-                html.P("Please select a participant or choose 'Show all participants'."),
+                html.P("Please select a participant or choose 'Show all groups'."),
             ])
 
         # Get participant name
@@ -492,65 +511,41 @@ def update_data_visualizations(group_id, show_all, participant_id, date_range):
 
 
 def create_group_comparison_data(start_date, end_date, mode):
-    """Create data for group comparison visualizations"""
+    """Create data for group comparison visualizations showing data amounts"""
     try:
-        # Get all groups
-        groups = get_all_groups()
-
-        if not groups:
+        # For the new 'Show all groups' functionality, we use the date range
+        # to show daily data trends and current day summary
+        print(f"DEBUG: start_date={start_date}, end_date={end_date}, types: {type(start_date)}, {type(end_date)}")
+        
+        # Convert dates to proper format
+        if isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        if isinstance(end_date, str):
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        elif hasattr(start_date, 'date'):
+            start_date = start_date.date()
+        elif hasattr(end_date, 'date'):
+            end_date = end_date.date()
+        
+        print(f"DEBUG: After conversion - start_date={start_date}, end_date={end_date}")
+        
+        # Get daily data for line charts
+        daily_data = get_group_daily_data_counts(start_date, end_date)
+        print(f"DEBUG: Daily data count: {len(daily_data) if daily_data else 0}")
+        
+        # Get group data summary for current day (end_date) for table
+        group_data = get_group_data_summary(end_date)
+        print(f"DEBUG: Group data count: {len(group_data) if group_data else 0}")
+        
+        if not group_data:
             return html.Div("No groups found")
 
-        # Placeholder for group comparison data
-        group_data = []
-
-        # Load data for each group
-        for group in groups:
-            group_id = group["id"]
-
-            # Get participants in this group
-            participant_groups = get_participants_by_group(group_id)
-            if group_id not in participant_groups:
-                continue
-
-            participants = participant_groups[group_id]["participants"]
-
-            # Accumulate data from all participants
-            participant_data = []
-            for participant in participants:
-                # Load data for this participant over the date range
-                df = load_participant_data(participant["id"], start_date, end_date)
-                if not df.empty:
-                    df["participant_id"] = participant["id"]
-                    df["group_id"] = group_id
-                    df["group_name"] = group["name"]
-                    participant_data.append(df)
-
-            # Combine all participant data for this group
-            if participant_data:
-                group_df = pd.concat(participant_data)
-
-                # Calculate group averages
-                avg_data = {
-                    "group_id": group_id,
-                    "group_name": group["name"],
-                    "avg_resting_hr": group_df["resting_hr"].mean(),
-                    "avg_max_hr": group_df["max_hr"].mean(),
-                    "avg_sleep_hours": group_df["sleep_hours"].mean(),
-                    "avg_hrv_rest": group_df["hrv_rest"].mean(),
-                    "participant_count": len(participants),
-                }
-                group_data.append(avg_data)
-
-        # Convert to DataFrame
-        group_df = pd.DataFrame(group_data)
-
-        if group_df.empty:
-            return html.Div("No data available for the selected date range")
-
-        # Create visualizations
-        return create_group_comparison(group_df)
+        # Create visualizations with both daily trends and current day summary
+        return create_group_data_summary_visualization(group_data, daily_data)
     except Exception as e:
         print(f"Error creating group comparison visualizations: {e}")
+        import traceback
+        traceback.print_exc()
         return html.Div(
             [dbc.Alert(f"Error loading group data: {str(e)}", color="danger")]
         )

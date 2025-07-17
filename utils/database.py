@@ -822,3 +822,170 @@ def get_supervisor_group_participants(user_id):
     except Exception as e:
         print(f"Error getting supervisor group participants: {e}")
         return []
+
+
+def get_group_data_summary(selected_date):
+    """
+    Get summary of physiological and questionnaire data for all groups for a specific date.
+    Returns data counts for Past 7 Days and Past 30 Days from the selected date.
+    """
+    try:
+        # Convert selected_date to datetime if it's a string
+        if isinstance(selected_date, str):
+            selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        
+        # Calculate date ranges
+        past_7_start = selected_date - timedelta(days=6)  # 7 days including selected date
+        past_30_start = selected_date - timedelta(days=29)  # 30 days including selected date
+        
+        query = text("""
+            WITH group_summary AS (
+                SELECT 
+                    g.id as group_id,
+                    g.group_name,
+                    -- Current day physiological data count
+                    COUNT(DISTINCT CASE 
+                        WHEN hm_current.date = :selected_date 
+                        THEN hm_current.user_id 
+                    END) as physio_current_day_count,
+                    -- Current day questionnaire data count
+                    COUNT(DISTINCT CASE 
+                        WHEN qd_current.date = :selected_date 
+                        THEN qd_current.user_id 
+                    END) as questionnaire_current_day_count,
+                    -- Past 7 days physiological data count
+                    COUNT(DISTINCT CASE 
+                        WHEN hm7.date BETWEEN :past_7_start AND :selected_date 
+                        THEN hm7.user_id 
+                    END) as physio_7_day_count,
+                    -- Past 30 days physiological data count
+                    COUNT(DISTINCT CASE 
+                        WHEN hm30.date BETWEEN :past_30_start AND :selected_date 
+                        THEN hm30.user_id 
+                    END) as physio_30_day_count,
+                    -- Past 7 days questionnaire data count
+                    COUNT(DISTINCT CASE 
+                        WHEN qd7.date BETWEEN :past_7_start AND :selected_date 
+                        THEN qd7.user_id 
+                    END) as questionnaire_7_day_count,
+                    -- Past 30 days questionnaire data count
+                    COUNT(DISTINCT CASE 
+                        WHEN qd30.date BETWEEN :past_30_start AND :selected_date 
+                        THEN qd30.user_id 
+                    END) as questionnaire_30_day_count,
+                    -- Total participants in group
+                    COUNT(DISTINCT u.id) as total_participants
+                FROM groups g
+                JOIN user_groups ug ON g.id = ug.group_id
+                JOIN users u ON ug.user_id = u.id
+                LEFT JOIN health_metrics hm_current ON u.id = hm_current.user_id 
+                    AND hm_current.date = :selected_date
+                LEFT JOIN questionnaire_data qd_current ON u.id = qd_current.user_id 
+                    AND qd_current.date = :selected_date
+                LEFT JOIN health_metrics hm7 ON u.id = hm7.user_id 
+                    AND hm7.date BETWEEN :past_7_start AND :selected_date
+                LEFT JOIN health_metrics hm30 ON u.id = hm30.user_id 
+                    AND hm30.date BETWEEN :past_30_start AND :selected_date
+                LEFT JOIN questionnaire_data qd7 ON u.id = qd7.user_id 
+                    AND qd7.date BETWEEN :past_7_start AND :selected_date
+                LEFT JOIN questionnaire_data qd30 ON u.id = qd30.user_id 
+                    AND qd30.date BETWEEN :past_30_start AND :selected_date
+                WHERE u.role = 'participant'
+                GROUP BY g.id, g.group_name
+                ORDER BY g.group_name
+            )
+            SELECT 
+                group_id,
+                group_name,
+                physio_current_day_count,
+                questionnaire_current_day_count,
+                physio_7_day_count,
+                physio_30_day_count,
+                questionnaire_7_day_count,
+                questionnaire_30_day_count,
+                total_participants
+            FROM group_summary
+        """)
+        
+        with engine.connect() as conn:
+            result = conn.execute(query, {
+                "selected_date": selected_date,
+                "past_7_start": past_7_start,
+                "past_30_start": past_30_start
+            })
+            
+            groups_data = []
+            for row in result:
+                group_dict = {}
+                for idx, col in enumerate(result.keys()):
+                    group_dict[col] = row[idx]
+                groups_data.append(group_dict)
+                
+            return groups_data
+            
+    except Exception as e:
+        print(f"Error getting group data summary: {e}")
+        return []
+
+
+def get_group_daily_data_counts(start_date, end_date):
+    """
+    Get daily counts of physiological and questionnaire data for all groups over a date range.
+    Returns data for line plots showing trends over time.
+    """
+    try:
+        print(f"DEBUG DB: get_group_daily_data_counts called with start_date={start_date}, end_date={end_date}")
+        
+        # Convert dates to datetime objects if they're strings
+        if isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        if isinstance(end_date, str):
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        print(f"DEBUG DB: After conversion - start_date={start_date}, end_date={end_date}")
+        
+        # Simplified query without generate_series - just get data for the existing dates
+        query = text("""
+            SELECT 
+                DISTINCT hm.date,
+                g.id as group_id,
+                g.group_name,
+                -- Count participants with physiological data for this date
+                COUNT(DISTINCT hm.user_id) as physio_count,
+                -- Count participants with questionnaire data for this date
+                COUNT(DISTINCT qd.user_id) as questionnaire_count
+            FROM groups g
+            LEFT JOIN user_groups ug ON g.id = ug.group_id
+            LEFT JOIN users u ON ug.user_id = u.id AND u.role = 'participant'
+            LEFT JOIN health_metrics hm ON u.id = hm.user_id 
+                AND hm.date >= :start_date 
+                AND hm.date <= :end_date
+            LEFT JOIN questionnaire_data qd ON u.id = qd.user_id 
+                AND qd.date = hm.date
+            WHERE hm.date IS NOT NULL
+            GROUP BY hm.date, g.id, g.group_name
+            ORDER BY hm.date, g.group_name
+        """)
+        
+        with engine.connect() as conn:
+            result = conn.execute(query, {
+                "start_date": start_date,
+                "end_date": end_date
+            })
+            
+            daily_data = []
+            for row in result:
+                row_dict = {}
+                for idx, col in enumerate(result.keys()):
+                    row_dict[col] = row[idx]
+                daily_data.append(row_dict)
+            
+            print(f"DEBUG DB: Returning {len(daily_data)} rows of daily data")
+            if daily_data:
+                print(f"DEBUG DB: Sample row: {daily_data[0]}")
+                
+            return daily_data
+            
+    except Exception as e:
+        print(f"Error getting group daily data counts: {e}")
+        return []

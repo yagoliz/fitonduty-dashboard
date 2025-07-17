@@ -44,9 +44,9 @@ def create_admin_sidebar():
             
             html.Div(id="participant-dropdown-container", className="mt-3"),
             
-            # Show all participants option
+            # Show all groups option
             dbc.Checklist(
-                options=[{"label": "Show all participants", "value": 1}],
+                options=[{"label": "Show all groups", "value": 1}],
                 value=[],
                 id="show-all-checkbox",
                 switch=True,
