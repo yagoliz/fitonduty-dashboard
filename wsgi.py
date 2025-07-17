@@ -4,7 +4,7 @@ from app import app, server as application # noqa: F401
 import index # noqa: F401
 
 # Import all callbacks to ensure they're registered
-from callbacks import admin_callbacks, participant_callbacks  # noqa: F401
+from callbacks import admin_callbacks, participant_callbacks, supervisor_callbacks  # noqa: F401
 
 
 # Now the application is fully initialized and can be served by Gunicorn
