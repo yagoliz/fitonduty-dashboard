@@ -28,6 +28,10 @@ from utils.visualization import (
     create_anomaly_heatmap,
 )
 
+from utils.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 @callback(
     [Output("sidebar-column", "className"),
      Output("main-content-column", "className"),
@@ -108,7 +112,7 @@ def populate_group_dropdown(pathname, show_all):
 
         return options, default_value, disabled
     except Exception as e:
-        print(f"Error populating group dropdown: {e}")
+        logger.error(f"Error populating group dropdown: {e}", exc_info=True)
         return [], None, False
 
 
@@ -167,7 +171,7 @@ def update_participant_dropdown(selected_group, show_all):
             ]
         )
     except Exception as e:
-        print(f"Error updating participant dropdown: {e}")
+        logger.error(f"Error updating participant dropdown: {e}", exc_info=True)
         return html.Div(f"Error loading participants: {str(e)}")
 
 
@@ -326,55 +330,51 @@ def update_admin_date_range(n_last_7, n_last_30, n_custom,
             btn_colors["last_7"], btn_colors["last_30"], btn_colors["custom"])
 
 
-# Callback to automatically update the current date based on selected participant
+# Callback to automatically update the date range based on selected participant
 @callback(
-    [Output("admin-current-date", "date", allow_duplicate=True),
-     Output("admin-date-range", "data", allow_duplicate=True)],
+    Output("admin-date-range", "data", allow_duplicate=True),
     [Input("selected-participant-store", "data")],
-    [State("admin-date-range", "data")],
+    [State("admin-date-range", "data"), State("admin-current-date", "date")],
     prevent_initial_call=True
 )
-def auto_update_date_for_participant(participant_id, current_date_range):
-    """Automatically update the current date to the participant's latest data date"""
+def auto_update_date_range_for_participant(participant_id, current_date_range, current_date):
+    """Automatically update the date range based on selected participant, but keep current date unchanged"""
     if not participant_id:
         raise PreventUpdate
     
     try:
-        # Get the participant's latest data date
-        latest_date = get_user_latest_data_date(participant_id)
+        # Convert current_date to date object if it's a string
+        if isinstance(current_date, str):
+            current_date = parse_and_format_date(current_date)
         
-        if latest_date:
-            # Get current mode from existing date range data
-            current_mode = current_date_range.get("mode", "last_7") if current_date_range else "last_7"
-            
-            # Calculate new start date based on current mode and latest date
-            if current_mode == "last_7":
-                start_date = latest_date - timedelta(days=6)
-            elif current_mode == "last_30":
-                start_date = latest_date - timedelta(days=29)
-            elif current_mode == "custom":
-                # For custom mode, keep the existing start date or default to 7 days back
-                if current_date_range and current_date_range.get("start_date"):
-                    start_date = parse_and_format_date(current_date_range["start_date"])
-                else:
-                    start_date = latest_date - timedelta(days=6)
+        # Get current mode from existing date range data
+        current_mode = current_date_range.get("mode", "last_7") if current_date_range else "last_7"
+        
+        # Calculate new start date based on current mode and current date (not latest data date)
+        if current_mode == "last_7":
+            start_date = current_date - timedelta(days=6)
+        elif current_mode == "last_30":
+            start_date = current_date - timedelta(days=29)
+        elif current_mode == "custom":
+            # For custom mode, keep the existing start date or default to 7 days back
+            if current_date_range and current_date_range.get("start_date"):
+                start_date = parse_and_format_date(current_date_range["start_date"])
             else:
-                start_date = latest_date - timedelta(days=6)
-            
-            # Create new date range data
-            new_date_range = {
-                "start_date": start_date.isoformat(),
-                "end_date": latest_date.isoformat(),
-                "mode": current_mode
-            }
-            
-            return latest_date, new_date_range
+                start_date = current_date - timedelta(days=6)
         else:
-            # If no data found, don't update
-            raise PreventUpdate
+            start_date = current_date - timedelta(days=6)
+        
+        # Create new date range data using current_date as end_date
+        new_date_range = {
+            "start_date": start_date.isoformat(),
+            "end_date": current_date.isoformat(),
+            "mode": current_mode
+        }
+        
+        return new_date_range
             
     except Exception as e:
-        print(f"Error auto-updating date for participant {participant_id}: {e}")
+        print(f"Error auto-updating date range for participant {participant_id}: {e}")
         raise PreventUpdate
 
 
@@ -474,52 +474,63 @@ def update_selected_view_info(group_id, participant_id, show_all, date_range):
 )
 def update_data_visualizations(group_id, show_all, participant_id, date_range):
     """Update the data visualizations based on selection"""
-    if not date_range:
-        return html.Div([dbc.Alert("Please select a date range.", color="info")])
+    try:
+        logger.info(f"Updating data visualizations - group_id: {group_id}, show_all: {show_all}, participant_id: {participant_id}")
+        
+        if not date_range:
+            logger.warning("No date range provided for data visualization")
+            return html.Div([dbc.Alert("Please select a date range.", color="info")])
 
-    # Extract date information
-    start_date = date_range.get("start_date")
-    end_date = date_range.get("end_date")
-    
-    if not start_date or not end_date:
-        # Default to last 7 days if dates are missing
-        today = datetime.now().date()
-        end_date = today.isoformat()
-        start_date = (today - timedelta(days=6)).isoformat()
+        # Extract date information
+        start_date = date_range.get("start_date")
+        end_date = date_range.get("end_date")
+        
+        if not start_date or not end_date:
+            logger.warning("Missing start_date or end_date, using default 7-day range")
+            # Default to last 7 days if dates are missing
+            today = datetime.now().date()
+            end_date = today.isoformat()
+            start_date = (today - timedelta(days=6)).isoformat()
 
-    # Convert string dates to datetime objects if needed
-    if isinstance(start_date, str):
-        start_date = parse_and_format_date(start_date)
-    if isinstance(end_date, str):
-        end_date = parse_and_format_date(end_date)
+        # Convert string dates to datetime objects if needed
+        if isinstance(start_date, str):
+            start_date = parse_and_format_date(start_date)
+        if isinstance(end_date, str):
+            end_date = parse_and_format_date(end_date)
 
-    # If showing all participants
-    if 1 in show_all:
-        # Return group comparison visualizations
-        return create_group_comparison_data(start_date, end_date, "range")
+        logger.debug(f"Using date range: {start_date} to {end_date}")
 
-    # If only group is selected
-    if group_id and not participant_id:
-        # Return group summary visualizations
-        return create_group_summary_data(group_id, start_date, end_date, "range")
+        # If showing all participants
+        if 1 in show_all:
+            logger.info("Creating group comparison visualizations for all groups")
+            return create_group_comparison_data(start_date, end_date, "range")
 
-    # If participant is selected
-    if participant_id:
-        # Return participant detail visualizations
-        return create_participant_detail_data(participant_id, start_date, end_date)
+        # If only group is selected
+        if group_id and not participant_id:
+            logger.info(f"Creating group summary visualizations for group {group_id}")
+            return create_group_summary_data(group_id, start_date, end_date, "range")
 
-    # Default - no selection
-    return html.Div([
-        dbc.Alert("Please select a group and/or participant to view data.", color="info")
-    ])
+        # If participant is selected
+        if participant_id:
+            logger.info(f"Creating participant detail visualizations for participant {participant_id}")
+            return create_participant_detail_data(participant_id, start_date, end_date)
+
+        # Default - no selection
+        logger.warning("No group or participant selected for data visualization")
+        return html.Div([
+            dbc.Alert("Please select a group and/or participant to view data.", color="info")
+        ])
+    except Exception as e:
+        logger.error(f"Error updating data visualizations: {e}", exc_info=True)
+        return html.Div([
+            dbc.Alert(f"Error loading data visualizations: {str(e)}", color="danger")
+        ])
 
 
 def create_group_comparison_data(start_date, end_date, mode):
     """Create data for group comparison visualizations showing data amounts"""
     try:
-        # For the new 'Show all groups' functionality, we use the date range
-        # to show daily data trends and current day summary
-        print(f"DEBUG: start_date={start_date}, end_date={end_date}, types: {type(start_date)}, {type(end_date)}")
+        logger.info(f"Creating group comparison data for date range: {start_date} to {end_date}")
         
         # Convert dates to proper format
         if isinstance(start_date, str):
@@ -531,25 +542,24 @@ def create_group_comparison_data(start_date, end_date, mode):
         elif hasattr(end_date, 'date'):
             end_date = end_date.date()
         
-        print(f"DEBUG: After conversion - start_date={start_date}, end_date={end_date}")
+        logger.debug(f"Converted dates - start_date={start_date}, end_date={end_date}")
         
         # Get daily data for line charts
         daily_data = get_group_daily_data_counts(start_date, end_date)
-        print(f"DEBUG: Daily data count: {len(daily_data) if daily_data else 0}")
+        logger.debug(f"Retrieved daily data: {len(daily_data) if daily_data else 0} records")
         
         # Get group data summary for current day (end_date) for table
         group_data = get_group_data_summary(end_date)
-        print(f"DEBUG: Group data count: {len(group_data) if group_data else 0}")
+        logger.debug(f"Retrieved group data: {len(group_data) if group_data else 0} records")
         
         if not group_data:
+            logger.warning("No groups found for comparison data")
             return html.Div("No groups found")
 
         # Create visualizations with both daily trends and current day summary
-        return create_group_data_summary_visualization(group_data, daily_data)
+        return create_group_data_summary_visualization(end_date, group_data, daily_data)
     except Exception as e:
-        print(f"Error creating group comparison visualizations: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error creating group comparison visualizations: {e}", exc_info=True)
         return html.Div(
             [dbc.Alert(f"Error loading group data: {str(e)}", color="danger")]
         )
@@ -609,18 +619,23 @@ def create_participant_detail_data(participant_id, start_date, end_date):
             user_data = get_user_by_id(participant_id)
             participant_name = user_data.get("username") if user_data else None
         except Exception as e:
-            print(f"Error getting participant name: {e}")
+            logger.error(f"Error getting participant name: {e}")
             participant_name = None
+
+        # Get the participant's latest data date for current date view
+        # This ensures we show the most recent data available, not just today's date
+        latest_date = get_user_latest_data_date(participant_id)
+        current_date = latest_date if latest_date else end_date
 
         # Create visualizations
         return create_participant_detail(
             df,
             questionnaire_df,
-            end_date,
+            current_date,
             participant_name,
         )
     except Exception as e:
-        print(f"Error creating participant detail visualizations: {e}")
+        logger.error(f"Error creating participant detail visualizations: {e}")
         return html.Div(
             [dbc.Alert(f"Error loading participant data: {str(e)}", color="danger")]
         )

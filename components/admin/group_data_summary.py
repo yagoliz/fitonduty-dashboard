@@ -3,27 +3,29 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 from utils.visualization.general_charts import create_group_data_summary_chart, create_group_daily_line_chart, create_group_physiological_line_chart, create_group_questionnaire_line_chart
+from utils.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
-def create_group_data_summary_visualization(group_data, daily_data=None):
+def create_group_data_summary_visualization(end_date, group_data, daily_data=None):
     """Create visualization for group data summary showing data amounts"""
     try:
-        print(f"DEBUG COMPONENT: group_data count: {len(group_data) if group_data else 0}")
-        print(f"DEBUG COMPONENT: daily_data count: {len(daily_data) if daily_data else 0}")
+        logger.info(f"Creating group data summary visualization - group_data: {len(group_data) if group_data else 0} records, daily_data: {len(daily_data) if daily_data else 0} records")
         
         if not group_data:
+            logger.warning("No group data available for visualization")
             return html.Div([
                 dbc.Alert("No group data available", color="info")
             ])
         
         # Create separate charts for physiological and questionnaire data
         if daily_data:
-            print(f"DEBUG COMPONENT: Creating separate charts with {len(daily_data)} daily data points")
+            logger.debug(f"Creating separate charts with {len(daily_data)} daily data points")
             physio_fig = create_group_physiological_line_chart(daily_data)
             questionnaire_fig = create_group_questionnaire_line_chart(daily_data)
         else:
-            # If no daily data, show message instead of chart
-            print("DEBUG COMPONENT: No daily data provided")
+            logger.warning("No daily data provided for charts")
             physio_fig = None
             questionnaire_fig = None
         
@@ -54,7 +56,7 @@ def create_group_data_summary_visualization(group_data, daily_data=None):
         
         # Summary Table Card
         summary_card = dbc.Card([
-            dbc.CardHeader(html.H5("Current Day Data Summary", className="card-title")),
+            dbc.CardHeader(html.H5(f"Current Day Data Summary - {end_date}", className="card-title")),
             dbc.CardBody([
                 html.P("Number of participants with data for the selected day.", 
                        className="text-muted mb-3"),
@@ -131,7 +133,7 @@ def create_group_data_summary_visualization(group_data, daily_data=None):
         return html.Div(components)
         
     except Exception as e:
-        print(f"Error creating group data summary visualization: {e}")
+        logger.error(f"Error creating group data summary visualization: {e}", exc_info=True)
         return html.Div([
             dbc.Alert(f"Error creating visualization: {str(e)}", color="danger")
         ])

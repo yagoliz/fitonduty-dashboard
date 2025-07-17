@@ -400,7 +400,9 @@ def create_group_physiological_line_chart(daily_data):
     fig.update_layout(
         title_text="Daily Physiological Data Availability",
         title_x=0.5,
-        height=400,
+        autosize=True,
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=None,
         template='plotly_white',
         legend=dict(
             yanchor="top",
@@ -460,7 +462,9 @@ def create_group_questionnaire_line_chart(daily_data):
     fig.update_layout(
         title_text="Daily Questionnaire Data Availability",
         title_x=0.5,
-        height=400,
+        autosize=True,
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=None,
         template='plotly_white',
         legend=dict(
             yanchor="top",

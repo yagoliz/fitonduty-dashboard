@@ -23,6 +23,7 @@ def create_participant_detail(df_history: pd.DataFrame, questionnaire_df_history
     Args:
         df_history: DataFrame with historical data (for trend charts)
         questionnaire_df_history: DataFrame with historical questionnaire data
+        selected_date: Date to show in the current date view (should be participant's latest data date)
         participant_name: Name of the participant (optional)
         
     Returns:
@@ -32,16 +33,16 @@ def create_participant_detail(df_history: pd.DataFrame, questionnaire_df_history
     if df_history.empty:
         df_single_day = pd.DataFrame()
     else:
-        # Get the data for the last day
+        # Get the data for the selected date (which should be the participant's latest data date)
         df_single_day = df_history[df_history["date"] == selected_date]
-        df_single_day.fillna(0, inplace=True)
+        df_single_day = df_single_day.fillna(0)
     
     if questionnaire_df_history.empty:
         df_questionnaire_single = pd.DataFrame()
     else:
         # Get the questionnaire data for the last day
         df_questionnaire_single = questionnaire_df_history[questionnaire_df_history["date"] == selected_date]
-        df_questionnaire_single.fillna(0, inplace=True)
+        df_questionnaire_single = df_questionnaire_single.fillna(0)
     
     title_prefix = f"{participant_name}'s" if participant_name else "Participant"
 

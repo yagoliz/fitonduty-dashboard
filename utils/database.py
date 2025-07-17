@@ -4,6 +4,10 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import QueuePool
 
+from .logging_config import get_logger
+
+logger = get_logger(__name__)
+
 # Get database connection string from environment variable or use default for development
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://username:password@localhost:5432/dashboard')
 
@@ -20,6 +24,11 @@ engine = create_engine(
 
 def get_user_by_id(user_id):
     """Get user by username from the database"""
+    
+    # If user_id is "all", return None
+    if user_id == "all":
+        return None
+
     query = text("""
         SELECT id, username, password_hash, role, last_login, is_active 
         FROM users 
@@ -203,6 +212,10 @@ def get_user_latest_data_date(user_id):
     Returns:
         Date object of the most recent data, or None if no data exists
     """
+    # If user_id is "all" return None
+    if user_id == "all":
+        return None
+
     query = text("""
         SELECT MAX(date) as latest_date
         FROM health_metrics
@@ -218,7 +231,7 @@ def get_user_latest_data_date(user_id):
                 return row[0]
             return None
     except Exception as e:
-        print(f"Error getting latest data date for user {user_id}: {e}")
+        logger.error(f"Error getting latest data date for user {user_id}: {e}")
         return None
     
 
@@ -234,6 +247,10 @@ def load_participant_data(user_id, start_date=None, end_date=None):
     Returns:
         Pandas DataFrame with health data
     """
+    # If user_id is "all", return empty DataFrame
+    if user_id == "all":
+        return pd.DataFrame()
+
     # Build the query based on date parameters
     if start_date and end_date:
         query = text("""
@@ -317,7 +334,7 @@ def load_participant_data(user_id, start_date=None, end_date=None):
             df = pd.read_sql(query, conn, params=params)
         return df
     except Exception as e:
-        print(f"Error loading data from database: {e}")
+        logger.error(f"Error loading data from database: {e}")
         return pd.DataFrame()  # Return empty dataframe on error
 
 
@@ -354,7 +371,7 @@ def get_participant_ranking(user_id, start_date, end_date):
                 return ranking_data
             return None
     except Exception as e:
-        print(f"Error getting participant ranking: {e}")
+        logger.error(f"Error getting participant ranking: {e}")
         return None
     
 
@@ -392,7 +409,7 @@ def get_all_group_participants_ranking(user_id, start_date, end_date):
                 
             return participants_data
     except Exception as e:
-        print(f"Error getting group participants ranking: {e}")
+        logger.error(f"Error getting group participants ranking: {e}")
         return []
     
 
@@ -422,7 +439,7 @@ def get_group_historical_data(user_id, start_date, end_date):
             })
         return df
     except Exception as e:
-        print(f"Error getting group historical data: {e}")
+        logger.error(f"Error getting group historical data: {e}")
         return pd.DataFrame()
     
 
@@ -439,6 +456,10 @@ def load_anomaly_data(user_id, date=None, start_date=None, end_date=None):
     Returns:
         Pandas DataFrame with anomaly data
     """
+    # If user_id is "all", return empty DataFrame
+    if user_id == "all":
+        return pd.DataFrame()
+
     if date:
         # Single day query
         query = text("""
@@ -494,7 +515,7 @@ def load_anomaly_data(user_id, date=None, start_date=None, end_date=None):
             
             return df
     except Exception as e:
-        print(f"Error loading anomaly data: {e}")
+        logger.error(f"Error loading anomaly data: {e}")
         return pd.DataFrame()
     
 
@@ -510,6 +531,10 @@ def load_questionnaire_data(user_id, start_date=None, end_date=None):
     Returns:
         Pandas DataFrame with questionnaire data
     """
+    # If user_id is "all", return empty DataFrame
+    if user_id == "all":
+        return pd.DataFrame()
+
     # Build the query based on date parameters
     if start_date and end_date:
         query = text("""
@@ -577,7 +602,7 @@ def load_questionnaire_data(user_id, start_date=None, end_date=None):
             df = pd.read_sql(query, conn, params=params)
         return df
     except Exception as e:
-        print(f"Error loading questionnaire data from database: {e}")
+        logger.error(f"Error loading questionnaire data from database: {e}")
         return pd.DataFrame()  # Return empty dataframe on error
     
 
@@ -614,7 +639,7 @@ def get_participant_questionnaire_ranking(user_id, start_date, end_date):
                 return ranking_data
             return None
     except Exception as e:
-        print(f"Error getting participant questionnaire ranking: {e}")
+        logger.error(f"Error getting participant questionnaire ranking: {e}")
         return None
 
 
@@ -652,7 +677,7 @@ def get_all_group_questionnaire_ranking(user_id, start_date, end_date):
                 
             return participants_data
     except Exception as e:
-        print(f"Error getting group questionnaire ranking: {e}")
+        logger.error(f"Error getting group questionnaire ranking: {e}")
         return []
 
 
@@ -744,7 +769,7 @@ def get_supervisor_group_data(user_id, start_date, end_date):
             df = pd.DataFrame(result.fetchall(), columns=result.keys())
             return df
     except Exception as e:
-        print(f"Error getting supervisor group data: {e}")
+        logger.error(f"Error getting supervisor group data: {e}")
         return pd.DataFrame()
 
 
@@ -778,7 +803,7 @@ def get_supervisor_group_info(user_id):
                 return group_info
             return None
     except Exception as e:
-        print(f"Error getting supervisor group info: {e}")
+        logger.error(f"Error getting supervisor group info: {e}")
         return None
 
 
@@ -820,7 +845,7 @@ def get_supervisor_group_participants(user_id):
                 
             return participants
     except Exception as e:
-        print(f"Error getting supervisor group participants: {e}")
+        logger.error(f"Error getting supervisor group participants: {e}")
         return []
 
 
@@ -924,7 +949,7 @@ def get_group_data_summary(selected_date):
             return groups_data
             
     except Exception as e:
-        print(f"Error getting group data summary: {e}")
+        logger.error(f"Error getting group data summary: {e}")
         return []
 
 
@@ -934,7 +959,7 @@ def get_group_daily_data_counts(start_date, end_date):
     Returns data for line plots showing trends over time.
     """
     try:
-        print(f"DEBUG DB: get_group_daily_data_counts called with start_date={start_date}, end_date={end_date}")
+        logger.debug(f" get_group_daily_data_counts called with start_date={start_date}, end_date={end_date}")
         
         # Convert dates to datetime objects if they're strings
         if isinstance(start_date, str):
@@ -942,29 +967,40 @@ def get_group_daily_data_counts(start_date, end_date):
         if isinstance(end_date, str):
             end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         
-        print(f"DEBUG DB: After conversion - start_date={start_date}, end_date={end_date}")
+        logger.debug(f" After conversion - start_date={start_date}, end_date={end_date}")
         
-        # Simplified query without generate_series - just get data for the existing dates
+        # Generate date series and cross join with all groups to ensure all groups appear for all dates
         query = text("""
+            WITH date_series AS (
+                SELECT generate_series(
+                    CAST(:start_date AS date),
+                    CAST(:end_date AS date),
+                    interval '1 day'
+                )::date AS date
+            ),
+            group_dates AS (
+                SELECT 
+                    ds.date,
+                    g.id as group_id,
+                    g.group_name
+                FROM date_series ds
+                CROSS JOIN groups g
+            )
             SELECT 
-                DISTINCT hm.date,
-                g.id as group_id,
-                g.group_name,
+                gd.date,
+                gd.group_id,
+                gd.group_name,
                 -- Count participants with physiological data for this date
                 COUNT(DISTINCT hm.user_id) as physio_count,
                 -- Count participants with questionnaire data for this date
                 COUNT(DISTINCT qd.user_id) as questionnaire_count
-            FROM groups g
-            LEFT JOIN user_groups ug ON g.id = ug.group_id
+            FROM group_dates gd
+            LEFT JOIN user_groups ug ON gd.group_id = ug.group_id
             LEFT JOIN users u ON ug.user_id = u.id AND u.role = 'participant'
-            LEFT JOIN health_metrics hm ON u.id = hm.user_id 
-                AND hm.date >= :start_date 
-                AND hm.date <= :end_date
-            LEFT JOIN questionnaire_data qd ON u.id = qd.user_id 
-                AND qd.date = hm.date
-            WHERE hm.date IS NOT NULL
-            GROUP BY hm.date, g.id, g.group_name
-            ORDER BY hm.date, g.group_name
+            LEFT JOIN health_metrics hm ON u.id = hm.user_id AND hm.date = gd.date
+            LEFT JOIN questionnaire_data qd ON u.id = qd.user_id AND qd.date = gd.date
+            GROUP BY gd.date, gd.group_id, gd.group_name
+            ORDER BY gd.date, gd.group_name
         """)
         
         with engine.connect() as conn:
@@ -980,12 +1016,12 @@ def get_group_daily_data_counts(start_date, end_date):
                     row_dict[col] = row[idx]
                 daily_data.append(row_dict)
             
-            print(f"DEBUG DB: Returning {len(daily_data)} rows of daily data")
+            logger.debug(f" Returning {len(daily_data)} rows of daily data")
             if daily_data:
-                print(f"DEBUG DB: Sample row: {daily_data[0]}")
+                logger.debug(f" Sample row: {daily_data[0]}")
                 
             return daily_data
             
     except Exception as e:
-        print(f"Error getting group daily data counts: {e}")
+        logger.error(f"Error getting group daily data counts: {e}")
         return []

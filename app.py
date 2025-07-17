@@ -7,6 +7,12 @@ import uuid
 import os
 from datetime import datetime, timedelta
 from utils.database import get_user_by_username, update_last_login, create_session, get_user_groups, get_user_by_id
+from utils.logging_config import init_dashboard_logging, get_logger
+
+# Initialize logging
+init_dashboard_logging()
+logger = get_logger(__name__)
+
 
 # Initialize the Flask server
 server = Flask(__name__)
@@ -91,7 +97,7 @@ def load_user(user_id):
             return User(user_data)
         return None
     except Exception as e:
-        print(f"Error loading user: {e}")
+        logger.error(f" loading user: {e}")
         return None
 
 # Custom login function
@@ -116,5 +122,5 @@ def login_and_create_session(user):
         
         return True
     except Exception as e:
-        print(f"Error during login: {e}")
+        logger.error(f" during login: {e}")
         return False
