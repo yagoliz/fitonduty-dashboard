@@ -5,7 +5,6 @@ import dash_bootstrap_components as dbc
 from flask_login import current_user
 
 from components.supervisor.navbar import create_navbar
-from components.supervisor.group_view import create_group_header
 from components.footer import create_footer
 from utils.database import get_supervisor_group_info
 from utils.logging_config import get_logger
@@ -60,7 +59,7 @@ def create_layout():
             dbc.Row([
                 # Group information
                 dbc.Col([
-                    create_group_header(group_info, start_date=seven_days_ago, end_date=today),
+                    html.Div(id="supervisor-group-header"),
                 ], xs=12, md=6, className="mb-4"),
                 
                 # Time period controls
@@ -75,7 +74,7 @@ def create_layout():
                                     html.Label("End Date:", className="date-range-label"),
                                     dcc.DatePickerSingle(
                                         id="supervisor-end-date-picker",
-                                        date=today,
+                                        date=today.isoformat(),
                                         display_format="YYYY-MM-DD",
                                         className="date-input mb-3",
                                     ),
@@ -94,7 +93,7 @@ def create_layout():
                                 ], xs=12),
                             ])
                         ])
-                    ], className="shadow-sm")
+                    ], className="shadow-sm date-picker-card", style={"overflow": "visible"}),
                 ], xs=12, md=6, className="mb-4"),
             ]),
 

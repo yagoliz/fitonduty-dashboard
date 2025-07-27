@@ -7,7 +7,6 @@ from utils.visualization.supervisor_charts import (
     create_data_count_chart,
     create_dual_axis_physiological_chart,
     create_subjective_metrics_chart,
-    create_empty_chart
 )
 from utils.logging_config import get_logger
 

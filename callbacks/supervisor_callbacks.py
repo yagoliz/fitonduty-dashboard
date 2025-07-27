@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from flask_login import current_user
 
-from components.supervisor.group_view import create_supervisor_group_view
+from components.supervisor.group_view import create_supervisor_group_view, create_group_header
 from utils.database import get_supervisor_group_info
 from utils.logging_config import get_logger
 
@@ -104,6 +104,48 @@ def update_supervisor_date_range(n_7, n_30, n_90, end_date, current_data):
     
     logger.debug(f"Final date range: {date_range}")
     return date_range, btn_7_color, btn_30_color, btn_90_color
+
+
+@callback(
+    Output("supervisor-group-header", "children"),
+    [Input("supervisor-date-range", "data")],
+)
+def update_supervisor_group_header(date_range_data):
+    """Update supervisor group header with current date range"""
+    logger.debug(f"Updating supervisor group header with date range: {date_range_data}")
+    
+    if not current_user.is_authenticated:
+        logger.warning("Unauthenticated user attempting to access supervisor group header")
+        raise PreventUpdate
+    
+    if current_user.role != 'supervisor':
+        logger.warning(f"User {current_user.id} with role '{current_user.role}' attempting to access supervisor group header")
+        raise PreventUpdate
+    
+    if not date_range_data:
+        logger.warning("No date range data provided for group header")
+        raise PreventUpdate
+    
+    try:
+        # Get supervisor's group information
+        user_id = current_user.id
+        group_info = get_supervisor_group_info(user_id)
+        
+        if not group_info:
+            logger.warning(f"No group assigned to supervisor user_id={user_id}")
+            return dbc.Alert("No group assigned to your supervisor account.", color="warning")
+        
+        # Parse dates
+        start_date = datetime.strptime(date_range_data["start_date"], "%Y-%m-%d").date()
+        end_date = datetime.strptime(date_range_data["end_date"], "%Y-%m-%d").date()
+        
+        logger.debug(f"Creating group header for group '{group_info['group_name']}' with date range: {start_date} to {end_date}")
+        
+        return create_group_header(group_info, start_date=start_date, end_date=end_date)
+        
+    except Exception as e:
+        logger.error(f"Error updating supervisor group header: {str(e)}", exc_info=True)
+        return dbc.Alert(f"Error loading group information: {str(e)}", color="danger")
 
 
 @callback(
