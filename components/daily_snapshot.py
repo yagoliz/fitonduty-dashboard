@@ -2,7 +2,7 @@ from dash import html
 import dash_bootstrap_components as dbc 
 import pandas as pd
 
-def create_daily_snapshot_card(df: pd.DataFrame, questionnaire_df: pd.DataFrame, selected_date: str) -> dbc.Card:
+def create_daily_snapshot_card(df: pd.DataFrame, questionnaire_df: pd.DataFrame, selected_date: str, latest_data_date=None) -> dbc.Card:
     """
     Create a daily snapshot card with health metrics and questionnaire data
     Args:
@@ -113,10 +113,16 @@ def create_daily_snapshot_card(df: pd.DataFrame, questionnaire_df: pd.DataFrame,
     # Check if we have questionnaire data for this date
     has_questionnaire = not questionnaire_df.empty and len(questionnaire_df) > 0
     
+    # Create subtitle with latest data date info
+    subtitle_text = "Complete health overview for the selected day"
+    if latest_data_date:
+        latest_date_str = latest_data_date.strftime("%Y-%m-%d")
+        subtitle_text = f"Complete health overview for the selected day (Latest data: {latest_date_str})"
+    
     return dbc.Card([
         dbc.CardHeader([
             html.H5(f"Health Metrics for {selected_date}", className="mb-0"),
-            html.P("Complete health overview for the selected day", className="text-muted small mb-0 mt-1")
+            html.P(subtitle_text, className="text-muted small mb-0 mt-1")
         ]),
         dbc.CardBody([
             # Health Metrics Section

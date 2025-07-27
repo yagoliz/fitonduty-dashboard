@@ -622,10 +622,11 @@ def create_participant_detail_data(participant_id, start_date, end_date):
             logger.error(f"Error getting participant name: {e}")
             participant_name = None
 
-        # Get the participant's latest data date for current date view
-        # This ensures we show the most recent data available, not just today's date
+        # Get the participant's latest data date for display in card title
         latest_date = get_user_latest_data_date(participant_id)
-        current_date = latest_date if latest_date else end_date
+        
+        # Use end_date (which is today's date) as the current date for data view
+        current_date = end_date
 
         # Create visualizations
         return create_participant_detail(
@@ -633,6 +634,7 @@ def create_participant_detail_data(participant_id, start_date, end_date):
             questionnaire_df,
             current_date,
             participant_name,
+            latest_date,
         )
     except Exception as e:
         logger.error(f"Error creating participant detail visualizations: {e}")

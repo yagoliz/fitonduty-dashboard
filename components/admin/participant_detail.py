@@ -16,7 +16,7 @@ from utils.visualization import (
     create_sleep_quality_trend_chart,
 )
 
-def create_participant_detail(df_history: pd.DataFrame, questionnaire_df_history: pd.DataFrame, selected_date: datetime.date, participant_name=None):
+def create_participant_detail(df_history: pd.DataFrame, questionnaire_df_history: pd.DataFrame, selected_date: datetime.date, participant_name=None, latest_data_date=None):
     """
     Create visualizations for a single participant
     
@@ -53,7 +53,7 @@ def create_participant_detail(df_history: pd.DataFrame, questionnaire_df_history
         html.Div([
             dbc.Row([
                 dbc.Col([
-                    create_daily_snapshot_card(df_single_day, df_questionnaire_single, selected_date_str)
+                    create_daily_snapshot_card(df_single_day, df_questionnaire_single, selected_date_str, latest_data_date)
                 ], width=12, lg=6, className="mb-4"),
                 
                 # Heart Rate Zones Chart
