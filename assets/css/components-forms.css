@@ -1,18 +1,19 @@
 /* Form Components - Date Pickers & Inputs */
 
 /* Date selector container */
-.date-selector-container {
+.date-selector {
     background-color: var(--light);
     border-radius: var(--border-radius);
     padding: 0.75rem;
-    box-shadow: var(--shadow-sm);
+    /* box-shadow: var(--shadow-sm); */
     margin-bottom: 1.5rem;
     max-width: 320px;
+    overflow: visible;
 }
 
-.date-selector-container:hover {
+/* .date-selector:hover {
     box-shadow: var(--shadow);
-}
+} */
 
 /* Date picker styling */
 .date-input .DateInput {
