@@ -202,6 +202,37 @@ def update_participant_store(participant_id, show_all, group_id):
     return None
 
 
+# Callback to handle date navigation arrows
+@callback(
+    Output("admin-current-date", "date"),
+    [Input("admin-date-prev", "n_clicks"),
+     Input("admin-date-next", "n_clicks")],
+    [State("admin-current-date", "date")],
+    prevent_initial_call=True
+)
+def navigate_date(prev_clicks, next_clicks, current_date):
+    """Navigate date by one day using arrow buttons"""
+    ctx = callback_context
+    
+    if not ctx.triggered:
+        raise PreventUpdate
+    
+    trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    # Convert current_date to date object if it's a string
+    if isinstance(current_date, str):
+        current_date = parse_and_format_date(current_date)
+    
+    if trigger_id == "admin-date-prev":
+        new_date = current_date - timedelta(days=1)
+    elif trigger_id == "admin-date-next":
+        new_date = current_date + timedelta(days=1)
+    else:
+        raise PreventUpdate
+    
+    return new_date
+
+
 # Call back to update the admin date range based on button clicks
 @callback(
     [Output("admin-date-range", "data"),

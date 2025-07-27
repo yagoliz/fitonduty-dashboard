@@ -19,15 +19,21 @@ def create_admin_date_selector():
     return html.Div([
         html.H5("Select Analysis Period", className="mb-2"),
         
-        # Current date selector
+        # Current date selector with navigation arrows
         html.Div([
             html.Label("Current Date:", className="date-range-label"),
-            dcc.DatePickerSingle(
-                id="admin-current-date",
-                date=today,
-                display_format="YYYY-MM-DD",
-                className="date-input dash-bootstrap",
-            ),
+            html.Div([
+                dbc.Button("◀", id="admin-date-prev", color="light", size="sm", className="me-2"),
+                html.Div([
+                    dcc.DatePickerSingle(
+                        id="admin-current-date",
+                        date=today,
+                        display_format="YYYY-MM-DD",
+                        className="date-input",
+                        first_day_of_week=1,),
+                ], style={"flex": "1", "maxWidth": "200px", "position": "relative"}),
+                dbc.Button("▶", id="admin-date-next", color="light", size="sm", className="ms-2"),
+            ], className="d-flex align-items-center", style={"width": "fit-content"}),
         ], className="date-range-row mb-3"),
         
         # Period selection buttons
