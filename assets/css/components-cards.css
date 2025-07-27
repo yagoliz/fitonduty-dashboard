@@ -31,6 +31,22 @@
     background-color: rgba(248, 249, 250, 0.2);
 }
 
+/* Allow date picker calendars to overflow card boundaries */
+.date-picker-card {
+    overflow: visible !important;
+    z-index: 1060;
+}
+
+.date-picker-card .card-body {
+    overflow: visible !important;
+    z-index: 1060;
+}
+
+.date-picker-card .card-header {
+    overflow: visible !important;
+    z-index: 1060;
+}
+
 /* Shadow variants */
 .shadow-sm {
     box-shadow: var(--shadow-sm) !important;
