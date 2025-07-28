@@ -61,7 +61,7 @@ def create_supervisor_group_view(user_id, start_date, end_date):
         
         # Create the components
         logger.debug("Creating summary cards")
-        summary_cards = create_summary_cards(df)
+        summary_cards = create_summary_cards(df, num_participants)
         
         logger.debug("Creating data count charts")
         data_count_charts = create_data_count_charts(df, num_participants=num_participants)
@@ -116,7 +116,7 @@ def create_group_header(group_info, start_date, end_date):
     ], className="mb-4")
 
 
-def create_summary_cards(df):
+def create_summary_cards(df, num_participants=1):
     """Create summary cards with key metrics"""
     logger.debug("Creating summary cards")
     
@@ -183,7 +183,7 @@ def create_summary_cards(df):
                             
                             dbc.Col([
                                 html.Div([
-                                    html.H3(f"{max_physio_participation}", className="text-warning text-center metric-value mb-1"),
+                                    html.H3(f"{max(max_physio_participation, max_questionnaire_participation)}", className="text-warning text-center metric-value mb-1"),
                                     html.P("Peak", className="text-center small mb-0"),
                                     html.P("(participants)", className="text-center text-muted extra-small"),
                                 ], className="metric-box")
@@ -204,27 +204,35 @@ def create_summary_cards(df):
                         dbc.Row([
                             dbc.Col([
                                 html.Div([
-                                    html.H3(f"{(avg_physio_participation/max_physio_participation*100):.0f}%" if max_physio_participation > 0 else "—", className="text-primary text-center metric-value mb-1"),
+                                    html.H3(f"{(avg_physio_participation/num_participants*100):.0f}%" if num_participants > 0 else "—", className="text-primary text-center metric-value mb-1"),
                                     html.P("Physio Rate", className="text-center small mb-0"),
-                                    html.P("(participation)", className="text-center text-muted extra-small"),
+                                    html.P(f"Out of {num_participants} participants", className="text-center text-muted extra-small"),
                                 ], className="metric-box")
                             ], xs=6, className="mb-3"),
                             
                             dbc.Col([
                                 html.Div([
-                                    html.H3(f"{(avg_questionnaire_participation/max_questionnaire_participation*100):.0f}%" if max_questionnaire_participation > 0 else "—", className="text-success text-center metric-value mb-1"),
+                                    html.H3(f"{(avg_questionnaire_participation/num_participants*100):.0f}%" if num_participants > 0 else "—", className="text-info text-center metric-value mb-1"),
                                     html.P("Survey Rate", className="text-center small mb-0"),
-                                    html.P("(participation)", className="text-center text-muted extra-small"),
+                                    html.P(f"Out of {num_participants} participants", className="text-center text-muted extra-small"),
+                                ], className="metric-box")
+                            ], xs=6, className="mb-3"),
+
+                            dbc.Col([
+                                html.Div([
+                                    html.H3(f"{max_physio_participation}", className="text-success text-center metric-value mb-1"),
+                                    html.P("Maximum physio data", className="text-center small mb-0"),
+                                    html.P(f"Out of {num_participants} participants", className="text-center text-muted extra-small"),
                                 ], className="metric-box")
                             ], xs=6, className="mb-3"),
                             
                             dbc.Col([
                                 html.Div([
-                                    html.H3(f"{max(max_physio_participation, max_questionnaire_participation)}", className="text-info text-center metric-value mb-1"),
-                                    html.P("Max Group", className="text-center small mb-0"),
-                                    html.P("(participants)", className="text-center text-muted extra-small"),
+                                    html.H3(f"{max_questionnaire_participation}", className="text-warning text-center metric-value mb-1"),
+                                    html.P("Maximum survey data", className="text-center small mb-0"),
+                                    html.P(f"Out of {num_participants} participants", className="text-center text-muted extra-small"),
                                 ], className="metric-box")
-                            ], xs=12, className="mb-3"),
+                            ], xs=6, className="mb-3"),
                         ], className="g-3")
                     ])
                 ], className="shadow-sm")
